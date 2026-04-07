@@ -5,6 +5,10 @@
 
 namespace fs = std::filesystem;
 
+/**
+ * Kind of redundant function.
+ * Nice to have :)
+ */
 bool checkExistance(fs::path path) {
     if (fs::exists(path)) {
         return true;
@@ -12,10 +16,16 @@ bool checkExistance(fs::path path) {
     return false;
 }
 
+/**
+ * Redundant function. :)
+ */
 bool hasIgnoreFile(fs::path saverIgnore) {
     return fs::exists(saverIgnore);
 }
 
+/**
+ * Function that reads file and returns an array of the content.
+ */
 std::vector<fs::path> readRules(fs::path base_path) {
     fs::path saver_ignore = base_path / ".saverIgnore";
     std::vector<fs::path> ignore_rules;
@@ -35,6 +45,9 @@ std::vector<fs::path> readRules(fs::path base_path) {
     return ignore_rules;
 }
 
+/**
+ * Method that iterates the ignore rules from a file and enforces them.
+ */
 bool Repository::ignore(fs::path path_to_files) {
     fs::path absolute_file = fs::absolute(path_to_files).lexically_normal();
 
@@ -55,6 +68,10 @@ bool Repository::ignore(fs::path path_to_files) {
     return false;
 }
 
+/**
+ * Method that inits the repository.
+ * Not done!!
+ */
 bool Repository::init() { 
     if (checkExistance(this->objects_path) || checkExistance(this->refs_path)) {
         return false;
@@ -66,6 +83,12 @@ bool Repository::init() {
     return checkExistance(this->objects_path) && checkExistance(this->refs_path);
 }
 
+/**
+ * Method that captures files to be added.
+ * (Recursive if directory with children exists)
+ * @param path_to_files - specified path by user
+ * @returns boolean
+ */
 bool Repository::add(fs::path path_to_files) {
     fs::path output_path = this->base_path  / path_to_files;
     fs::path saver_ignore = this->base_path / ".saverIgnore";
@@ -78,7 +101,6 @@ bool Repository::add(fs::path path_to_files) {
         std::cerr << output_path << " does not exist" << std::endl;
         return false;
     }
-
 
     if (fs::is_regular_file(path_to_files)) {
         std::cout << "Added file: " << output_path.lexically_normal() << std::endl;
@@ -98,6 +120,9 @@ bool Repository::add(fs::path path_to_files) {
     return true;
 }
 
+/**
+ * Temporarly for debugging.
+ */
 void Repository::print_add_storage() const {
     for (const auto& entry : add_storage) {
         std::cout << "Added item: " << entry << '\n';

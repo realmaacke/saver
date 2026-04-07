@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
 
                 int run = repo.add(files) ? 0 : 1;
 
-                repo.print_add_storage();
+                // repo.print_add_storage();
 
                 return run;
             }
