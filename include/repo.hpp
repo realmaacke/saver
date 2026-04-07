@@ -11,6 +11,8 @@ public:
             objects_path(saver_path / "objects"), refs_path(saver_path / "refs") {};
     bool init();
     bool add(fs::path path_to_files);
+    bool ignore(fs::path path_to_files);
+
     // used to store when recursive add
     std::vector<fs::path> add_storage;
     void print_add_storage() const;
