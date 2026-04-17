@@ -72,15 +72,59 @@ bool Repository::ignore(fs::path path_to_files) {
  * Method that inits the repository.
  * Not done!!
  */
-bool Repository::init() { 
-    if (checkExistance(this->objects_path) || checkExistance(this->refs_path)) {
+
+bool Repository::saveIndex() const {
+    std::ofstream out(this->index_path);
+    if (!out) {
+        std::cerr << "Saver failed to open index for writing: " << this->index_path << '\n';
         return false;
     }
 
-    fs::create_directories(this->objects_path);
-    fs::create_directories(this->refs_path);
+    for (const auto& path : this->add_storage) {
+        out << path.generic_string() << '\n';
+    }
+    return true;
+}
 
-    return checkExistance(this->objects_path) && checkExistance(this->refs_path);
+bool Repository::loadIndex() {
+    this->add_storage.clear();
+
+    if (!fs::exists(this->index_path)) {
+        return true;
+    }
+
+    std::ifstream in(this->index_path);
+    if (!in) {
+        std::cerr << "Failed to open index for reading: " << this->index_path << '\n';
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(in, line)) {
+        if (!line.empty()) {
+            this->add_storage.emplace_back(line);
+        }
+    }
+    return true;
+}
+
+
+bool Repository::init() {
+    try {
+        if (!checkExistance(this->saver_path)) {
+            fs::create_directories(this->saver_path);
+    
+        }
+
+        if (!fs::exists(this->index_path)) {
+            std::ofstream(this->index_path);
+        }
+
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Saver could not store project: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 /**
@@ -105,7 +149,7 @@ bool Repository::add(fs::path path_to_files) {
     if (fs::is_regular_file(path_to_files)) {
         std::cout << "Added file: " << output_path.lexically_normal() << std::endl;
         this->add_storage.push_back(path_to_files);
-        return true;
+        return this->saveIndex();
     }
 
     if (fs::is_directory(path_to_files)) {
@@ -120,11 +164,44 @@ bool Repository::add(fs::path path_to_files) {
     return true;
 }
 
-/**
- * Temporarly for debugging.
- */
-void Repository::print_add_storage() const {
-    for (const auto& entry : add_storage) {
-        std::cout << "Added item: " << entry << '\n';
+bool Repository::stage(fs::path path_to_files) {
+    if (!this->loadIndex()) {
+        this->init();
     }
+
+    if (!this->add(path_to_files)) {
+        return false;
+    }
+
+    return this->saveIndex();
 }
+
+
+int Repository::upload() {
+    std::cout << "Starting upload" << std::endl;
+
+    if (this->add_storage.empty()) {
+        return 1;
+    }
+
+    if (this->add_storage.size() > 1) {
+        this->sender.sendMultipleFiles(
+            "http://localhost:9019/users/username/projects/project_name/upload",
+            this->base_path,
+            this->add_storage
+        );
+        return 0;
+    }
+
+    this->sender.sendFile(
+        "http://localhost:9019/users/username/projects/project_name/upload",
+        this->base_path,
+        this->add_storage.front()
+    );
+
+    return 0;
+}
+
+// bool Repository::login(std::string ssh_key) {
+//     return true;
+// }

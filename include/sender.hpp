@@ -20,5 +20,9 @@ public:
         const fs::path& base_dir,
         const std::vector<fs::path>& files
     );
+
+    // bool authenticateLogin(
+    //     fs::path& key_path
+    // );
 private:
 };

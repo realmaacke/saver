@@ -37,6 +37,38 @@ static std::string json_escape(const std::string& s) {
     return out;
 }
 
+// bool Sender::authenticateLogin(fs::path& key_path) {
+//     std::ifstream file(key_path);
+//     std::stringstream buffer;
+
+//     buffer << file.rdbuf();
+
+//     std::string key = buffer.str();
+
+//     std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl(curl_easy_init(), curl_easy_cleanup);
+
+//     if (curl) {
+//         curl_easy_setopt(curl.get(), CURLOPT_URL, "http://localhost:9019");
+//         curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
+//         curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, key.c_str());
+//         curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, key.size());
+
+//     }
+
+    
+//     std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl(curl_easy_init(), curl_easy_cleanup);
+    
+
+//     // make request to server
+//     // if key == key on server
+
+//     // allow
+
+//     // else error msg + disallow
+
+//     return false;
+// }
+
 int Sender::sendFile(
     const std::string& remote,
     const fs::path& base_dir,
