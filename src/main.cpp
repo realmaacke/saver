@@ -46,6 +46,25 @@ int main(int argc, char** argv) {
                 return repo.upload();
             }
         },
+
+        {
+            "auth",
+            [&repo](int argc, char**argv) {
+                
+                if(argc < 3) {
+                    std::cerr << "Show status of auth here";
+
+                    return 0;
+                } else {
+                    std::filesystem::path ssh_path = argv[2];
+    
+                    repo.auth_store_key(ssh_path);
+                    return 0;
+                }
+                return 0;
+            }
+
+        }
     };
 
     std::string execute = argv[1];

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "sender.hpp"
+#include "auth.hpp"
 
 namespace fs = std::filesystem;
 
@@ -30,6 +31,12 @@ public:
     bool loadIndex();
     bool saveIndex() const;
 
+
+    // Kind of "getters" for Auth
+    void auth_store_key(fs::path ssh_path) {
+        auth.store_key(ssh_path);
+    }
+
     private:
     fs::path base_path;
     fs::path saver_path;
@@ -38,4 +45,5 @@ public:
     // used to store when recursive add
     std::vector<fs::path> add_storage;
     Sender sender;
+    Auth auth;
 };
