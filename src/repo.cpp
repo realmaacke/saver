@@ -184,22 +184,14 @@ int Repository::upload() {
         return 1;
     }
 
-    if (this->add_storage.size() > 1) {
-        this->sender.sendMultipleFiles(
-            "http://localhost:9019/users/username/projects/project_name/upload",
-            this->base_path,
-            this->add_storage
-        );
-        return 0;
-    }
+    SendRequest send;
 
-    this->sender.sendFile(
-        "http://localhost:9019/users/username/projects/project_name/upload",
-        this->base_path,
-        this->add_storage.front()
-    );
+    send.url = "http://localhost:9019/users/username/projects/project_name/upload";
+    send.files = this->add_storage;
+    send.base_dir = this->base_path;
+    send.include_manifest = true;
 
-    return 0;
+    return this->sender.send(send);
 }
 
 // bool Repository::login(std::string ssh_key) {

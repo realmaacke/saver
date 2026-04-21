@@ -1,6 +1,6 @@
 CXXFLAGS := -std=c++20 -Wall -Wextra -pedantic -g -Iinclude
 LDFLAGS :=
-LDLIBS := -lcurl
+LDLIBS := -lcurl -lcrypto -lssl
 
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/saver

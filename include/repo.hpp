@@ -37,6 +37,14 @@ public:
         auth.store_key(ssh_path);
     }
 
+    void auth_use_key() {
+        auth.use_key();
+    }
+
+    void auth_upload_key() {
+        auth.upload_key(this->sender);
+    }
+
     private:
     fs::path base_path;
     fs::path saver_path;

@@ -35,8 +35,6 @@ int main(int argc, char** argv) {
 
                 int run = repo.stage(files) ? 0 : 1;
 
-                // repo.print_add_storage();
-
                 return run;
             }
         },
@@ -63,7 +61,13 @@ int main(int argc, char** argv) {
                 }
                 return 0;
             }
-
+        },
+        {
+            "sandbox",
+            [&repo](int, char**) {
+                repo.auth_upload_key();
+                return 0;
+            }
         }
     };
 
