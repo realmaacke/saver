@@ -11,6 +11,10 @@
 #include <openssl/evp.h>
 #include <openssl/decoder.h>
 
+#include <json.hpp>
+
+using json = nlohmann::json;
+
 namespace fs = std::filesystem;
 
 EVP_PKEY* loadPrivateKey(const std::string& path) {
@@ -181,7 +185,7 @@ void Auth::upload_key(Sender& sender) {
     sender.send(request);
 }
 
-void Auth::use_key() {
+void Auth::use_key(Sender& sender) {
     fs::path ssh_path = iterateConfig(getConfigPath() + "keys.saver", "ssh_path");
 
     std::cout << ssh_path.string() << std::endl;
@@ -199,11 +203,20 @@ void Auth::use_key() {
     }
     
     std::string message = "ssh_message";
-    
     auto signature = signMessage(key, message);
     std::string encoded = base64Encode(signature);
-    
-    std::cout << "Signature: " << encoded << std::endl;
+
+    json body;
+
+    body["message"] = message;
+    body["signature"] = encoded;
 
     EVP_PKEY_free(key);
+
+    SendRequest request;
+
+    request.url = "http://localhost:9999/auth/user/marcus/challenge";
+    request.json_body = body.dump();
+
+    sender.send(request);
 }

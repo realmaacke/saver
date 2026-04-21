@@ -65,7 +65,8 @@ int main(int argc, char** argv) {
         {
             "sandbox",
             [&repo](int, char**) {
-                repo.auth_upload_key();
+                // repo.auth_upload_key();
+                repo.auth_use_key();
                 return 0;
             }
         }

@@ -17,6 +17,8 @@ struct SendRequest {
     std::vector<std::string> headers;
 
     long timeout = 30;
+
+    std::string json_body;
 };
 
 class Sender {

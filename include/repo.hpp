@@ -38,7 +38,7 @@ public:
     }
 
     void auth_use_key() {
-        auth.use_key();
+        auth.use_key(this->sender);
     }
 
     void auth_upload_key() {

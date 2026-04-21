@@ -12,7 +12,7 @@ class Auth {
 
         void store_key(fs::path ssh_path);
 
-        void use_key();
+        void use_key(Sender& sender);
         void upload_key(Sender& sender);
     private:
 };

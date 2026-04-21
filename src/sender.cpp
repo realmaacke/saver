@@ -123,6 +123,22 @@ int Sender::send(const SendRequest& req) {
         }
     }
 
+    // Adds json if exists
+    if (!req.json_body.empty()) {
+        curl_mimepart* json_part = curl_mime_addpart(mime);
+
+        if (!json_part) {
+            std::cerr << "Failed to create json part" << std::endl;
+            curl_mime_free(mime);
+            curl_easy_cleanup(curl);
+            return 1;
+        }
+
+        curl_mime_name(json_part, "json");
+        curl_mime_data(json_part, req.json_body.c_str(), req.json_body.size());
+        curl_mime_type(json_part, "application/json");
+    }
+
     // Appending headers to list.
     struct curl_slist* header_list = nullptr;
     for (const auto& header : req.headers) {

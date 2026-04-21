@@ -1,4 +1,4 @@
-CXXFLAGS := -std=c++20 -Wall -Wextra -pedantic -g -Iinclude
+CXXFLAGS := -std=c++20 -Wall -Wextra -pedantic -g -Iinclude -Iexternal
 LDFLAGS :=
 LDLIBS := -lcurl -lcrypto -lssl
 
