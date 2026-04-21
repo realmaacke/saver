@@ -185,8 +185,8 @@ int Repository::upload() {
     }
 
     SendRequest send;
-
-    send.url = "http://localhost:9019/users/username/projects/project_name/upload";
+    // hard coded for now.
+    send.url = "http://localhost:9999/repo/user/username/project/test/push";
     send.files = this->add_storage;
     send.base_dir = this->base_path;
     send.include_manifest = true;

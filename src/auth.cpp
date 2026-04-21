@@ -175,7 +175,8 @@ void Auth::upload_key(Sender& sender) {
 
     request.files.push_back(ssh_path);
     request.include_manifest = false;
-    request.url = "http://localhost:9019/users/username/invoke_key";
+    // hard coded stuff for now
+    request.url = "http://localhost:9999/auth/user/marcus/invoke_key";
 
     sender.send(request);
 }

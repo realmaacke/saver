@@ -23,23 +23,5 @@ class Sender {
 public:
     Sender() = default;
 
-    // int sendFile(
-    //     const std::string& remote,
-    //     const fs::path& base_dir,
-    //     const fs::path& file
-    // );
-
-    // int sendMultipleFiles(
-    //     const std::string& remote,
-    //     const fs::path& base_dir,
-    //     const std::vector<fs::path>& files
-    // );
-
-
     int send(const SendRequest& req);
-
-    // bool authenticateLogin(
-    //     fs::path& key_path
-    // );
-private:
 };
