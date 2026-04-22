@@ -3,207 +3,192 @@
 #include <iostream>
 #include <fstream>
 
-#include "global_context.hpp"
-
 namespace fs = std::filesystem;
 
-/**
- * Kind of redundant function.
- * Nice to have :)
- */
-bool checkExistance(fs::path path) {
-    if (fs::exists(path)) {
-        return true;
+
+void Repository::init(fs::path target_directory) {
+    this->target_directory = target_directory;
+    this->saver_path = target_directory / ".saver";
+    this->index_path = this->saver_path / "index";
+    this->saver_ignore = target_directory / ".saverIgnore";
+    return;
+};
+
+void Repository::initRepo() {
+    // Creates folder
+    if (!fs::exists(this->saver_path)) {
+        fs::create_directories(this->saver_path);
     }
-    return false;
-}
-
-/**
- * Redundant function. :)
- */
-bool hasIgnoreFile(fs::path saverIgnore) {
-    return fs::exists(saverIgnore);
-}
-
-/**
- * Function that reads file and returns an array of the content.
- */
-std::vector<fs::path> readRules(fs::path base_path) {
-    fs::path saver_ignore = base_path / ".saverIgnore";
-    std::vector<fs::path> ignore_rules;
-
-    std::ifstream file(saver_ignore);
-    std::string line;
-
-    // Return empty
-    if (!hasIgnoreFile(saver_ignore)) return ignore_rules;
-
-    // Append all rules to array
-    while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        ignore_rules.emplace_back(line);
-    }
-
-    return ignore_rules;
-}
-
-/**
- * Method that iterates the ignore rules from a file and enforces them.
- */
-bool Repository::ignore(fs::path path_to_files) {
-    fs::path absolute_file = fs::absolute(path_to_files).lexically_normal();
-
-    std::vector<fs::path> ignore_rules = readRules(this->base_path);
-
-    for (const auto& rule : ignore_rules) {
-        fs::path absolute_rule = fs::absolute(base_path / rule).lexically_normal();
-
-        auto missmatch = std::mismatch(
-            absolute_rule.begin(), absolute_rule.end(),
-            absolute_file.begin(), absolute_file.end()
-        );
-
-        if (missmatch.first == absolute_rule.end()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * Method that inits the repository.
- * Not done!!
- */
-
-bool Repository::saveIndex() const {
-    std::ofstream out(this->index_path);
-    if (!out) {
-        std::cerr << "Saver failed to open index for writing: " << this->index_path << '\n';
-        return false;
-    }
-
-    for (const auto& path : this->add_storage) {
-        out << path.generic_string() << '\n';
-    }
-    return true;
-}
-
-bool Repository::loadIndex() {
-    this->add_storage.clear();
-
+    
+    // Stream creates the index file
     if (!fs::exists(this->index_path)) {
-        return true;
+        std::ofstream(this->index_path);
     }
 
-    std::ifstream in(this->index_path);
-    if (!in) {
-        std::cerr << "Failed to open index for reading: " << this->index_path << '\n';
-        return false;
-    }
+    return;
+}
 
-    std::string line;
-    while (std::getline(in, line)) {
-        if (!line.empty()) {
-            this->add_storage.emplace_back(line);
-        }
+bool Repository::status() {
+    std::vector<fs::path> commited_files = this->loadFromIndex();
+
+    for (const auto& commit : commited_files) {
+        std::cout << "File: " << commit << std::endl;
     }
     return true;
 }
 
 
-bool Repository::init() {
-    try {
-        if (!checkExistance(this->saver_path)) {
-            fs::create_directories(this->saver_path);
-    
-        }
-
-        if (!fs::exists(this->index_path)) {
-            std::ofstream(this->index_path);
-        }
-
-        return true;
-    } catch (const std::exception& e) {
-        std::cerr << "Saver could not store project: " << e.what() << std::endl;
-        return false;
-    }
-}
-
 /**
- * Method that captures files to be added.
- * (Recursive if directory with children exists)
- * @param path_to_files - specified path by user
- * @returns boolean
+ * Recursive method that adds items to index.
  */
-bool Repository::add(fs::path path_to_files) {
-    fs::path output_path = this->base_path  / path_to_files;
-    fs::path saver_ignore = this->base_path / ".saverIgnore";
+bool Repository::add(fs::path path_to_add) {
+    fs::path output_path = this->target_directory / path_to_add;
 
-    if (this->ignore(path_to_files)) {
+    // if the path itself is ignored, do nothing.
+    if (this->executeIgnore(path_to_add)) {
         return true;
     }
-    
-    if (!fs::exists(path_to_files)) {
-        std::cerr << output_path << " does not exist" << std::endl;
+
+    if (!fs::exists(path_to_add)) {
+        std::cout << "saver: " << output_path << "did not match any files" << std::endl;
         return false;
     }
 
-    if (fs::is_regular_file(path_to_files)) {
-        std::cout << "Added file: " << output_path.lexically_normal() << std::endl;
-        this->add_storage.push_back(path_to_files);
-        return this->saveIndex();
+    if (fs::is_regular_file(path_to_add)) {
+        return this->addToIndex(path_to_add);
     }
 
-    if (fs::is_directory(path_to_files)) {
-        
-        for (const auto& entry : fs::directory_iterator(path_to_files)) {
-            if (!this->add(entry.path())) {
+    if (fs::is_directory(path_to_add)) {
+        for (const auto& entry : fs::directory_iterator(path_to_add)) {
+            if(!this->add(entry.path())) {
                 return false;
             }
         }
         return true;
     }
     return true;
-}
+};
 
-bool Repository::stage(fs::path path_to_files) {
-    if (!this->loadIndex()) {
-        this->init();
+bool Repository::describe() {
+    /**
+     * Add the commit stuff here.
+     */
+
+     return true;
+};
+
+bool Repository::save() {
+    if (!this->hasCommited) {
+        std::cout << "All is saved, try to describe if you got a new save!" << std::endl;
+        return true;
     }
+    return true;
+};
 
-    if (!this->add(path_to_files)) {
+bool Repository::reset() {
+    std::ofstream out(this->index_path);
+
+    if (!out) {
+        std::cerr << "fatal: saver could not reset the changes" << std::endl;
         return false;
     }
 
-    return this->saveIndex();
-}
+    out << "";
+    return true;
+};
 
+bool Repository::addToIndex(fs::path path_to_store) {
+    std::ofstream out(this->index_path, std::ios::app);
 
-int Repository::upload() {
-    std::cout << "Starting upload" << std::endl;
+    
+    if (!out) {
+        std::cerr << "fatal: saver could not store the changes" << std::endl;
+        return false;
+    }
+    
+    // Prevents duplicates
+    std::vector<fs::path> currentIndex = this->loadFromIndex();
 
-    if (this->add_storage.empty()) {
-        return 1;
+    bool found = false;
+    
+    for (const auto& path_to_saved : currentIndex) {
+        if (path_to_saved == path_to_store) {
+            found = true;
+        }
     }
 
-    SendRequest send;
+    if (!found) {
+        out << path_to_store.generic_string() << '\n';
+    }
     
-    send.url = buildApiEndpoint(getContext(), {
-        "repo",
-        "user",
-        getContext().username,
-        "project",
-        getContext().project,
-        "push"
-    });
+    return true;
+};
 
-    send.files = this->add_storage;
-    send.base_dir = this->base_path;
-    send.include_manifest = true;
+/**
+ * method that loads the stored changes and returns them.
+ */
+std::vector<fs::path> Repository::loadFromIndex() {
+    std::ifstream in(this->index_path);
+    std::vector<fs::path> stored_changes;
 
-    return this->sender.send(send);
+    if (!in) {
+        std::cerr << "fatal: saver could not load the changes" << std::endl;
+        return stored_changes;
+    }
+
+    std::string line;
+
+    while(std::getline(in, line)) {
+        if (!line.empty()) {
+            stored_changes.emplace_back(line);
+        }
+    }
+
+    return stored_changes;
+};
+
+/**
+ * method that reads the ignore files and appends to an array.
+ * also returns the array :)
+ */
+std::vector<fs::path> Repository::readIgnore() const {
+    std::vector<fs::path> ignore_rules;
+
+    if (!fs::exists(this->saver_ignore)) return ignore_rules;
+    
+    std::ifstream file(this->saver_ignore);
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) {
+            continue;
+        }
+        ignore_rules.emplace_back(line);
+    }
+
+    return ignore_rules;
+};
+
+/**
+ * Function that gets all the rules in array.
+ * Itterates that array and check if the path matches the ignored one.
+ */
+bool Repository::executeIgnore(fs::path ignored_path) {
+    fs::path sanitizedPath = fs::absolute(ignored_path).lexically_normal();
+
+    std::vector<fs::path> ignore_rules = readIgnore();
+
+    for (const auto& rule : ignore_rules) {
+        fs::path sanitizedRule = fs::absolute(this->target_directory / rule).lexically_normal();
+
+        auto missMatch = std::mismatch(
+            sanitizedRule.begin(), sanitizedRule.end(),
+            sanitizedPath.begin(), sanitizedPath.end()
+        );
+
+        if (missMatch.first == sanitizedRule.end()) {
+            return true;
+        }
+    }
+    return false;
 }
-
-// bool Repository::login(std::string ssh_key) {
-//     return true;
-// }

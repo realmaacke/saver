@@ -9,49 +9,34 @@ namespace fs = std::filesystem;
 
 class Repository {
 public:
-    explicit Repository(fs::path base_path) 
-        : base_path(base_path),
-          saver_path(base_path / ".saver"),
-          index_path(saver_path / "index"),
-          sender() {};
+    Repository(Sender& sender)
+        : sender(sender) {};
 
-    bool init();
-    bool add(fs::path path_to_files);
-    bool ignore(fs::path path_to_files);
-    bool stage(fs::path path_to_files);
+void init(fs::path target_directory);
+void initRepo();
 
-    // bool login(std::string ssh_key);
+// Actions
+bool status();
+bool add(fs::path path_to_add);
+bool describe();
+bool save();
+bool reset();
 
-    int upload();
+// Underlying Actions
+bool addToIndex(fs::path path_to_store);
+std::vector<fs::path> loadFromIndex();
 
-    int sendSingle();
-    int sendMultiple();
+// Ignores
+std::vector<fs::path> readIgnore() const;
+bool executeIgnore(fs::path ignored_path);
 
-    // Store/Load storage outside of memory
-    bool loadIndex();
-    bool saveIndex() const;
+private:
+    Sender& sender;
 
-
-    // Kind of "getters" for Auth
-    void auth_store_key(fs::path ssh_path) {
-        auth.store_key(ssh_path);
-    }
-
-    void auth_use_key() {
-        auth.use_key(this->sender);
-    }
-
-    void auth_upload_key() {
-        auth.upload_key(this->sender);
-    }
-
-    private:
-    fs::path base_path;
+    fs::path target_directory;
     fs::path saver_path;
     fs::path index_path;
-    
-    // used to store when recursive add
-    std::vector<fs::path> add_storage;
-    Sender sender;
-    Auth auth;
+    fs::path saver_ignore;
+
+    bool hasCommited = false;
 };
