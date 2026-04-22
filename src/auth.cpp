@@ -1,17 +1,21 @@
-#include "auth.hpp"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <vector>
 
-#include "utils.hpp"
-#include "sender.hpp"
-
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/decoder.h>
 
+// external
 #include <json.hpp>
+
+// internal
+#include "utils.hpp"
+#include "sender.hpp"
+#include "auth.hpp"
+#include "global_context.hpp"
+
 
 using json = nlohmann::json;
 
@@ -179,8 +183,7 @@ void Auth::upload_key(Sender& sender) {
 
     request.files.push_back(ssh_path);
     request.include_manifest = false;
-    // hard coded stuff for now
-    request.url = "http://localhost:9999/auth/user/marcus/invoke_key";
+    request.url = buildApiEndpoint(getContext(), {"auth", "user", getContext().username, "invoke_key"});
 
     sender.send(request);
 }
@@ -214,8 +217,7 @@ void Auth::use_key(Sender& sender) {
     EVP_PKEY_free(key);
 
     SendRequest request;
-
-    request.url = "http://localhost:9999/auth/user/marcus/challenge";
+    request.url = buildApiEndpoint(getContext(), {"auth", "user", getContext().username, "challenge"});
     request.json_body = body.dump();
 
     sender.send(request);

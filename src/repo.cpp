@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "global_context.hpp"
+
 namespace fs = std::filesystem;
 
 /**
@@ -185,8 +187,16 @@ int Repository::upload() {
     }
 
     SendRequest send;
-    // hard coded for now.
-    send.url = "http://localhost:9999/repo/user/username/project/test/push";
+    
+    send.url = buildApiEndpoint(getContext(), {
+        "repo",
+        "user",
+        getContext().username,
+        "project",
+        getContext().project,
+        "push"
+    });
+
     send.files = this->add_storage;
     send.base_dir = this->base_path;
     send.include_manifest = true;
