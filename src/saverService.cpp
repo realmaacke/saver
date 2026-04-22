@@ -20,8 +20,13 @@ int SaverService::executeCommand(const std::string& name, int argc, char** argv)
 void SaverService::loadCommands() {
 
     this->commands = {
-        { "status", CommandFactory::status(repo) },
-        { "add", CommandFactory::add(repo) }
+        { "init", CommandFactory::init(*this)},
+        { "status", CommandFactory::status(*this) },
+        { "add", CommandFactory::add(*this) },
+        { "describe", CommandFactory::describe(*this)},
+        { "save", CommandFactory::save(*this)},
+        { "reset", CommandFactory::reset(*this)},
+        { "auth", CommandFactory::auth(*this)}
     };
 
 };

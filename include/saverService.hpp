@@ -11,7 +11,6 @@
 
 class SaverService {
 public:
-
     SaverService(std::filesystem::path target_directory)
         : target_directory(std::move(target_directory)),
           sender(),
@@ -24,6 +23,10 @@ public:
 
     void loadCommands();
     int executeCommand(const std::string& name, int argc, char** argv);
+
+    Sender& getSender() { return sender; }
+    Auth& getAuth() { return auth; }
+    Repository& getRepository() { return repo; }
 private:
     std::filesystem::path target_directory;
     

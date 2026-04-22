@@ -168,12 +168,14 @@ void CreateLocalStorage(std::string config_path, std::string ssh_path) {
 }
 
 
-void Auth::store_key(fs::path ssh_path) {
+int Auth::store_key(fs::path ssh_path) {
 
     CreateLocalStorage(getConfigPath(), ssh_path);
+
+    return 0;
 }
 
-void Auth::upload_key(Sender& sender) {
+int Auth::upload_key(Sender& sender) {
     // takes the public version of the key (to be uploaded).
     fs::path ssh_path = iterateConfig(getConfigPath() + "keys.saver", "ssh_path") + ".pub";
 
@@ -186,23 +188,25 @@ void Auth::upload_key(Sender& sender) {
     request.url = buildApiEndpoint(getContext(), {"auth", "user", getContext().username, "invoke_key"});
 
     sender.send(request);
+
+    return 0;
 }
 
-void Auth::use_key(Sender& sender) {
+int Auth::use_key(Sender& sender) {
     fs::path ssh_path = iterateConfig(getConfigPath() + "keys.saver", "ssh_path");
 
     std::cout << ssh_path.string() << std::endl;
 
     if (ssh_path.empty()) {
         std::cerr << "no ssh path configured, be sure to run | saver auth path/to/key";
-        return;
+        return 1;
     }
 
     EVP_PKEY* key = loadPrivateKey(ssh_path.string());
     
     if (!key) {
         std::cout << "key was undefined" << std::endl;
-        return;
+        return 1;
     }
     
     std::string message = "ssh_message";
@@ -221,4 +225,26 @@ void Auth::use_key(Sender& sender) {
     request.json_body = body.dump();
 
     sender.send(request);
+
+    return 0;
+};
+
+int Auth::login_user(Sender& sender) {
+    std::string username;
+    std::string password;
+
+    std::cout << "username: ";
+    std::getline(std::cin, username);
+
+    std::cout << "password: ";
+    std::getline(std::cin, password);
+
+
+    std::cout << "credentials: " << username << " password: " << password << std::endl;
+
+    return 0;
+}
+
+int Auth::store_user() {
+    return 0;
 }

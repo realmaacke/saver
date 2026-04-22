@@ -10,9 +10,12 @@ class Auth {
     public:
         Auth() = default;
 
-        void store_key(fs::path ssh_path);
+        int store_key(fs::path ssh_path);
 
-        void use_key(Sender& sender);
-        void upload_key(Sender& sender);
+        int use_key(Sender& sender);
+        int upload_key(Sender& sender);
+
+        int login_user(Sender& sender);
+        int store_user();
     private:
 };
