@@ -17,5 +17,4 @@ class Auth {
 
         int login_user(Sender& sender);
         int store_user();
-    private:
 };

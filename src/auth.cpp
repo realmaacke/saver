@@ -239,9 +239,23 @@ int Auth::login_user(Sender& sender) {
     std::cout << "password: ";
     std::getline(std::cin, password);
 
+    json body;
 
-    std::cout << "credentials: " << username << " password: " << password << std::endl;
+    body["username"] = username;
+    body["password"] = password;
 
+    SendRequest request;
+    request.url = buildApiEndpoint(getContext(), {"auth", "login"});
+    request.json_body = body.dump();
+
+    int response = sender.send(request);
+    
+    if (response == 1) {
+        return 0;
+    }
+
+    // store username + password
+    
     return 0;
 }
 
