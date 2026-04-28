@@ -2,10 +2,12 @@
 #include <filesystem>
 #include <vector>
 #include <curl/curl.h>
+#include <optional>
 
 namespace fs = std::filesystem;
 
-struct SendRequest {
+struct SendRequest
+{
     std::string url;
 
     std::vector<fs::path> files;
@@ -19,11 +21,29 @@ struct SendRequest {
     long timeout = 30;
 
     std::string json_body;
+
+    enum class BodyType
+    {
+        NONE,
+        JSON,
+        MULTIPART
+    };
+
+    BodyType body_type = BodyType::NONE;
 };
 
-class Sender {
+struct SendResponse
+{
+    long http_code = 0;
+    std::string body;
+    bool success = false;
+    std::string error;
+};
+
+class Sender
+{
 public:
     Sender() = default;
 
-    int send(const SendRequest& req);
+    std::optional<SendResponse> send(const SendRequest &req);
 };

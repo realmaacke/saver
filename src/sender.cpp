@@ -1,54 +1,78 @@
 #include <iostream>
+#include <optional>
 
 #include "sender.hpp"
 
 namespace fs = std::filesystem;
 
-static size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp)
+{
     size_t total = size * nmemb;
-    static_cast<std::string*>(userp)->append(static_cast<char*>(contents), total);
+    static_cast<std::string *>(userp)->append(static_cast<char *>(contents), total);
     return total;
 }
 
-static std::string json_escape(const std::string& s) {
+static std::string json_escape(const std::string &s)
+{
     std::string out;
     out.reserve(s.size());
 
-    for (char c : s) {
-        switch (c) {
-            case '\"': out += "\\\""; break;
-            case '\\': out += "\\\\"; break;
-            case '\b': out += "\\b"; break;
-            case '\f': out += "\\f"; break;
-            case '\n': out += "\\n"; break;
-            case '\r': out += "\\r"; break;
-            case '\t': out += "\\t"; break;
-            default:   out += c; break;
+    for (char c : s)
+    {
+        switch (c)
+        {
+        case '\"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\b':
+            out += "\\b";
+            break;
+        case '\f':
+            out += "\\f";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        default:
+            out += c;
+            break;
         }
     }
     return out;
 }
 
 std::string createManifest(
-    const std::vector<fs::path>& files,
-    const fs::path& base_dir
-) {
+    const std::vector<fs::path> &files,
+    const fs::path &base_dir)
+{
     std::ostringstream manifest;
     bool first = true;
 
     manifest << "[";
 
-    for (size_t i = 0; i < files.size(); i++) {
-        const auto& file = files[i];
+    for (size_t i = 0; i < files.size(); i++)
+    {
+        const auto &file = files[i];
 
-        if (!fs::exists(file) || !fs::is_regular_file(file)) {
+        if (!fs::exists(file) || !fs::is_regular_file(file))
+        {
             throw std::runtime_error("Saver could not load file: " + file.string());
         }
 
         fs::path rel = fs::relative(file, base_dir);
         std::string field_name = "file" + std::to_string(i);
 
-        if (!first) {
+        if (!first)
+        {
             manifest << ", ";
         }
         first = false;
@@ -63,34 +87,66 @@ std::string createManifest(
     return manifest.str();
 }
 
+std::optional<SendResponse> Sender::send(const SendRequest &req)
+{
+    CURL *curl = curl_easy_init();
 
-int Sender::send(const SendRequest& req) {
-    CURL* curl = curl_easy_init();
-
-    if (!curl) return 1;
+    if (!curl)
+    {
+        return std::nullopt;
+    }
 
     std::string response;
 
-    curl_mime* mime = curl_mime_init(curl);
+    struct curl_slist *header_list = nullptr;
+    for (const auto &h : req.headers)
+    {
+        header_list = curl_slist_append(header_list, h.c_str());
+    }
 
-    if (!req.files.empty()) {
-        for (size_t i = 0; i < req.files.size(); i++) {
-            const auto& file = req.files[i];
+    curl_easy_setopt(curl, CURLOPT_URL, req.url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, req.timeout);
 
-            if (!fs::exists(file) || !fs::is_regular_file(file)) {
+    CURLcode res;
+    long http_code = 0;
+
+    if (req.body_type == SendRequest::BodyType::JSON && !req.json_body.empty())
+    {
+        // JSON
+
+        struct curl_slist *json_headers = nullptr;
+        json_headers = curl_slist_append(json_headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, json_headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req.json_body.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, req.json_body.size());
+
+        res = curl_easy_perform(curl);
+
+        curl_slist_free_all(json_headers);
+    }
+    else if (req.body_type == SendRequest::BodyType::MULTIPART)
+    {
+
+        curl_mime *mime = curl_mime_init(curl);
+
+        // files
+        for (size_t i = 0; i < req.files.size(); i++)
+        {
+            const auto &file = req.files[i];
+
+            if (!fs::exists(file) || !fs::is_regular_file(file))
+            {
                 std::cerr << "Invalid file: " << file << std::endl;
                 curl_mime_free(mime);
                 curl_easy_cleanup(curl);
-                return 1;
+
+                return std::nullopt;
             }
 
-            curl_mimepart* part = curl_mime_addpart(mime);
-            if (!part) {
-                std::cerr << "Failed to create mime part" << std::endl;
-                curl_mime_free(mime);
-                curl_easy_cleanup(curl);
-                return 1;
-            }
+            curl_mimepart *part = curl_mime_addpart(mime);
 
             std::string field_name = "file" + std::to_string(i);
 
@@ -98,82 +154,44 @@ int Sender::send(const SendRequest& req) {
             curl_mime_filedata(part, file.string().c_str());
             curl_mime_filename(part, file.filename().string().c_str());
         }
-    }
 
-    // Adding manifest if include is enabled.
-    if (req.include_manifest) {
-        std::string manifest = req.manifest_json;
-
-        if (manifest.empty() && !req.files.empty()) {
-            manifest = createManifest(req.files, req.base_dir);
+        // manifest
+        if (req.include_manifest && !req.manifest_json.empty())
+        {
+            curl_mimepart *m = curl_mime_addpart(mime);
+            curl_mime_name(m, "manifest");
+            curl_mime_data(m, req.manifest_json.c_str(), req.manifest_json.size());
+            curl_mime_type(m, "application/json");
         }
 
-        if (!manifest.empty()) {
-            curl_mimepart* manifest_part = curl_mime_addpart(mime);
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
-            if (!manifest_part) {
-                std::cerr << "Failed to create manifest" << std::endl;
-                curl_mime_free(mime);
-                curl_easy_cleanup(curl);
-                return 1;
-            }
-            curl_mime_name(manifest_part, "manifest");
-            curl_mime_data(manifest_part, manifest.c_str(), manifest.size());
-            curl_mime_type(manifest_part, "application/json");
-        }
+        res = curl_easy_perform(curl);
+
+        curl_mime_free(mime);
+    }
+    else
+    {
+        // GET
+        res = curl_easy_perform(curl);
     }
 
-    // Adds json if exists
-    if (!req.json_body.empty()) {
-        curl_mimepart* json_part = curl_mime_addpart(mime);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-        if (!json_part) {
-            std::cerr << "Failed to create json part" << std::endl;
-            curl_mime_free(mime);
-            curl_easy_cleanup(curl);
-            return 1;
-        }
-
-        curl_mime_name(json_part, "json");
-        curl_mime_data(json_part, req.json_body.c_str(), req.json_body.size());
-        curl_mime_type(json_part, "application/json");
-    }
-
-    // Appending headers to list.
-    struct curl_slist* header_list = nullptr;
-    for (const auto& header : req.headers) {
-        header_list = curl_slist_append(header_list, header.c_str());
-    }
-
-    // Setup of curl with options.
-    curl_easy_setopt(curl, CURLOPT_URL, req.url.c_str());
-    curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, req.timeout);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-    // Adding the header list
-    if (header_list) {
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
-    }
-
-    CURLcode res = curl_easy_perform(curl);
-
-    // Appending http code to long.
-    long http_code = 0;;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, & http_code);
-
-    // cleanup
     curl_slist_free_all(header_list);
-    curl_mime_free(mime);
     curl_easy_cleanup(curl);
 
-    // check for ok = false
-    if (res != CURLE_OK) {
-        std::cerr << "Could not send to remote: " << curl_easy_strerror(res) << std::endl;
-        return 1;
+    if (res != CURLE_OK)
+    {
+        std::cerr << "Request failed: " << curl_easy_strerror(res) << std::endl;
+        return std::nullopt;
     }
 
-    std::cout << "Sent to remote, code: " << http_code << std::endl << response << std::endl;
-    return 0;
+    SendResponse r;
+
+    r.http_code = http_code;
+    r.body = response;
+    r.success = true;
+
+    return r;
 }

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
+#include <optional>
 
 #include <openssl/pem.h>
 #include <openssl/evp.h>
@@ -16,47 +17,53 @@
 #include "auth.hpp"
 #include "global_context.hpp"
 
-
 using json = nlohmann::json;
 
 namespace fs = std::filesystem;
 
-EVP_PKEY* loadPrivateKey(const std::string& path) {
-    FILE* file = fopen(path.c_str(), "r");
-    if (!file) {
+EVP_PKEY *loadPrivateKey(const std::string &path)
+{
+    FILE *file = fopen(path.c_str(), "r");
+    if (!file)
+    {
         std::cerr << "Failed to open key\n";
         return nullptr;
     }
 
-    EVP_PKEY* key = PEM_read_PrivateKey(file, nullptr, nullptr, nullptr);
+    EVP_PKEY *key = PEM_read_PrivateKey(file, nullptr, nullptr, nullptr);
 
     fclose(file);
 
-    if (!key) {
+    if (!key)
+    {
         std::cerr << "Failed to parse PEM key\n";
     }
 
     return key;
 }
 
-std::vector<unsigned char> signMessage(EVP_PKEY* key, const std::string& message) {
-    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+std::vector<unsigned char> signMessage(EVP_PKEY *key, const std::string &message)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
-    if (!ctx) return {};
+    if (!ctx)
+        return {};
 
-    if (EVP_DigestSignInit(ctx, nullptr, EVP_sha256(), nullptr, key) != 1) {
+    if (EVP_DigestSignInit(ctx, nullptr, EVP_sha256(), nullptr, key) != 1)
+    {
         EVP_MD_CTX_free(ctx);
         return {};
     }
 
     size_t sigLen;
     EVP_DigestSign(ctx, nullptr, &sigLen,
-                   (const unsigned char*)message.data(), message.size());
+                   (const unsigned char *)message.data(), message.size());
 
     std::vector<unsigned char> signature(sigLen);
 
     if (EVP_DigestSign(ctx, signature.data(), &sigLen,
-                       (const unsigned char*)message.data(), message.size()) != 1) {
+                       (const unsigned char *)message.data(), message.size()) != 1)
+    {
         EVP_MD_CTX_free(ctx);
         return {};
     }
@@ -67,10 +74,11 @@ std::vector<unsigned char> signMessage(EVP_PKEY* key, const std::string& message
     return signature;
 }
 
-std::string base64Encode(const std::vector<unsigned char>& data) {
-    BIO* bio;
-    BIO* b64;
-    BUF_MEM* bufferPtr;
+std::string base64Encode(const std::vector<unsigned char> &data)
+{
+    BIO *bio;
+    BIO *b64;
+    BUF_MEM *bufferPtr;
 
     b64 = BIO_new(BIO_f_base64());
     bio = BIO_new(BIO_s_mem());
@@ -87,79 +95,94 @@ std::string base64Encode(const std::vector<unsigned char>& data) {
     return result;
 }
 
-std::string iterateConfig(fs::path config_file, std::string config_property) {
+std::string iterateConfig(fs::path config_file, std::string config_property)
+{
     std::fstream read_file;
     read_file.open(config_file);
-    
-    if (read_file.fail()) {
+
+    if (read_file.fail())
+    {
         std::cerr << "Read file failed" << std::endl;
         return "unknown";
     }
-    
+
     std::vector<std::string> lines;
     std::string line;
-    
-    while (getline(read_file, line)) {
-        if (line.starts_with(config_property + "=")) {
+
+    while (getline(read_file, line))
+    {
+        if (line.starts_with(config_property + "="))
+        {
             return line.substr(line.find('=') + 1);
         }
     }
     read_file.close();
-    
+
     return "unknown";
 }
-
 
 /**
  * Creates config and its directory if it dosent exists.
  */
-void CreateLocalStorage(std::string config_path, std::string ssh_path) {
+void CreateLocalStorage(std::string config_path, std::string ssh_path)
+{
     std::string config_file = "keys.saver";
     std::string file_content = "ssh_path=" + ssh_path;
 
-    if (!fs::exists(config_path)) {
+    if (!fs::exists(config_path))
+    {
         fs::create_directories(config_path);
         std::cout << "[Remove] Created Config at: " << config_path << std::endl;
     }
 
-    if (!fs::exists(config_path + config_file)) {
-        std::ofstream outfile (config_path + config_file);
+    if (!fs::exists(config_path + config_file))
+    {
+        std::ofstream outfile(config_path + config_file);
 
         outfile << file_content << std::endl;
 
         outfile.close();
-    } else {
+    }
+    else
+    {
 
         std::fstream read_file;
         read_file.open(config_path + config_file);
-        
-        if (read_file.fail()) {
+
+        if (read_file.fail())
+        {
             std::cerr << "Read file failed" << std::endl;
             return;
         }
-        
+
         std::vector<std::string> lines;
         std::string line;
-        
-        while (getline(read_file, line)) {
+
+        while (getline(read_file, line))
+        {
             lines.push_back(line);
         }
-        
+
         read_file.close();
-        
-        std::ofstream write_file (config_path + config_file);
+
+        std::ofstream write_file(config_path + config_file);
         bool found = false;
 
-        for (const auto& l : lines) {
-            if(l.starts_with("ssh_path=")) {
+        for (const auto &l : lines)
+        {
+            if (l.starts_with("ssh_path="))
+            {
                 write_file << file_content << std::endl;
                 found = true;
-            } else {
+            }
+            else
+            {
                 write_file << l << std::endl;
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             write_file << file_content << std::endl;
         }
 
@@ -167,15 +190,16 @@ void CreateLocalStorage(std::string config_path, std::string ssh_path) {
     }
 }
 
-
-int Auth::store_key(fs::path ssh_path) {
+int Auth::store_key(fs::path ssh_path)
+{
 
     CreateLocalStorage(getConfigPath(), ssh_path);
 
     return 0;
 }
 
-int Auth::upload_key(Sender& sender) {
+int Auth::upload_key(Sender &sender)
+{
     // takes the public version of the key (to be uploaded).
     fs::path ssh_path = iterateConfig(getConfigPath() + "keys.saver", "ssh_path") + ".pub";
 
@@ -192,23 +216,26 @@ int Auth::upload_key(Sender& sender) {
     return 0;
 }
 
-int Auth::use_key(Sender& sender) {
+int Auth::use_key(Sender &sender)
+{
     fs::path ssh_path = iterateConfig(getConfigPath() + "keys.saver", "ssh_path");
 
     std::cout << ssh_path.string() << std::endl;
 
-    if (ssh_path.empty()) {
+    if (ssh_path.empty())
+    {
         std::cerr << "no ssh path configured, be sure to run | saver auth path/to/key";
         return 1;
     }
 
-    EVP_PKEY* key = loadPrivateKey(ssh_path.string());
-    
-    if (!key) {
+    EVP_PKEY *key = loadPrivateKey(ssh_path.string());
+
+    if (!key)
+    {
         std::cout << "key was undefined" << std::endl;
         return 1;
     }
-    
+
     std::string message = "ssh_message";
     auto signature = signMessage(key, message);
     std::string encoded = base64Encode(signature);
@@ -229,7 +256,8 @@ int Auth::use_key(Sender& sender) {
     return 0;
 };
 
-int Auth::login_user(Sender& sender) {
+int Auth::login_user(Sender &sender)
+{
     std::string username;
     std::string password;
 
@@ -246,19 +274,41 @@ int Auth::login_user(Sender& sender) {
 
     SendRequest request;
     request.url = buildApiEndpoint(getContext(), {"auth", "login"});
+    request.body_type = SendRequest::BodyType::JSON;
     request.json_body = body.dump();
 
-    int response = sender.send(request);
-    
-    if (response == 1) {
-        return 0;
+    std::optional<SendResponse> response = sender.send(request);
+
+    if (!response.has_value())
+    {
+        std::cout << "fatal: request failed before response" << std::endl;
+        return 1;
     }
 
-    // store username + password
-    
+    json response_json = json::parse(response->body);
+
+    bool response_ok = response_json.value("ok", false);
+    std::string response_error =
+        response_json["error"].is_null()
+            ? ""
+            : response_json["error"].get<std::string>();
+
+    std::string response_session_id =
+        response_json["session_id"].is_null()
+            ? ""
+            : response_json["session_id"].get<std::string>();
+
+    if (!response_ok)
+    {
+        std::cout << "fatal: " << response_error << std::endl;
+        return 1;
+    }
+
+    std::cout << "session_id to store: " << response_session_id << std::endl;
     return 0;
 }
 
-int Auth::store_user() {
+int Auth::store_user()
+{
     return 0;
 }
