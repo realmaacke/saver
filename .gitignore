@@ -3,5 +3,5 @@
 build
 playground
 .saverIgnore
-build
+./build
 todo.txt
