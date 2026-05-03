@@ -7,6 +7,17 @@
 
 namespace fs = std::filesystem;
 
+struct IndexType {
+    fs::path name;
+    std::string hash;
+    std::string status;
+
+    IndexType() = default;
+
+    IndexType(fs::path n, std::string h, std::string s)
+        : name(std::move(n)), hash(std::move(h)), status(std::move(s)) {}
+};
+
 class Repository {
 public:
     Repository(Sender& sender)
@@ -24,7 +35,8 @@ bool reset();
 
 // Underlying Actions
 bool addToIndex(fs::path path_to_store);
-std::vector<fs::path> loadFromIndex();
+std::vector<IndexType> loadFromIndex();
+std::string hash_file(fs::path file_path);
 
 // Ignores
 std::vector<fs::path> readIgnore() const;

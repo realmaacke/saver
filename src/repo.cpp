@@ -3,8 +3,22 @@
 #include <iostream>
 #include <fstream>
 
+#include <openssl/sha.h>
+#include <sstream>
+#include <iomanip>
+
+#include <json.hpp>
+
+using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+namespace Color {
+    constexpr const char* reset = "\033[0m";
+    constexpr const char* red   = "\033[31m";
+    constexpr const char* green = "\033[32m";
+    constexpr const char* yellow= "\033[33m";
+    constexpr const char* blue  = "\033[34m";
+}
 
 void Repository::init(fs::path target_directory) {
     this->target_directory = target_directory;
@@ -22,17 +36,26 @@ void Repository::initRepo() {
     
     // Stream creates the index file
     if (!fs::exists(this->index_path)) {
-        std::ofstream(this->index_path);
+        std::ofstream out(this->index_path);
+        out << "[]";
     }
 
     return;
 }
 
 bool Repository::status() {
-    std::vector<fs::path> commited_files = this->loadFromIndex();
+    std::vector<IndexType> commited_files = this->loadFromIndex();
 
+    std::cout << "Changes to be saved:" << std::endl;
+    std::cout << "(use \"saver reset\" to unsave)" << std::endl;
     for (const auto& commit : commited_files) {
-        std::cout << "File: " << commit << std::endl;
+        std::cout << '\t'
+                  << Color::blue
+                  << commit.status
+                  << ": "
+                  << commit.name
+                  << Color::reset
+                  << std::endl;
     }
     return true;
 }
@@ -98,53 +121,80 @@ bool Repository::reset() {
 };
 
 bool Repository::addToIndex(fs::path path_to_store) {
-    std::ofstream out(this->index_path, std::ios::app);
 
+    std::ifstream in(this->index_path);
+    std::vector<IndexType> current_index = this->loadFromIndex();
     
-    if (!out) {
-        std::cerr << "fatal: saver could not store the changes" << std::endl;
-        return false;
+    json j;
+    
+    if (in) {
+        in >> j;
     }
-    
-    // Prevents duplicates
-    std::vector<fs::path> currentIndex = this->loadFromIndex();
+    std::string hash = this->hash_file(path_to_store);
+    std::string status = "added";
 
-    bool found = false;
-    
-    for (const auto& path_to_saved : currentIndex) {
-        if (path_to_saved == path_to_store) {
-            found = true;
+    for (const auto& index : current_index) {
+        if (path_to_store.generic_string() == index.name && index.hash != hash) {
+            status = "modified";
+            break;
         }
     }
 
-    if (!found) {
-        out << path_to_store.generic_string() << '\n';
+    json entry = {
+        {"name", path_to_store.generic_string()},
+        {"hash", hash},
+        {"status", status}
+    };
+
+    bool updatedFile = false;
+    // prevent duplicates (simple version)
+    for (auto& e : j) {
+        if (e["name"] == entry["name"]) {
+            e["hash"] = hash;
+            e["status"] = status;
+            updatedFile = true;
+            break;
+        }
     }
-    
+
+    if (!updatedFile) {
+        j.push_back(entry);
+    }
+
+    std::ofstream out(this->index_path);
+    out << j.dump(4); // pretty print
+
     return true;
 };
 
 /**
  * method that loads the stored changes and returns them.
  */
-std::vector<fs::path> Repository::loadFromIndex() {
+std::vector<IndexType> Repository::loadFromIndex() {
     std::ifstream in(this->index_path);
-    std::vector<fs::path> stored_changes;
+    std::vector<IndexType> result;
 
     if (!in) {
         std::cerr << "fatal: saver could not load the changes" << std::endl;
-        return stored_changes;
+        return result;
     }
 
-    std::string line;
-
-    while(std::getline(in, line)) {
-        if (!line.empty()) {
-            stored_changes.emplace_back(line);
-        }
+    json j;
+    
+    try {
+        in >> j;
+    } catch (const json::parse_error& e) {
+        std::cout << "fatal: saver file is malformed, error: " << e.what() << std::endl;
     }
 
-    return stored_changes;
+    for (const auto& item: j) {
+        result.emplace_back(
+            item["name"].get<fs::path>(),
+            item["hash"].get<std::string>(),
+            item["status"].get<std::string>()
+        );
+    }
+    return result;
 };
 
 /**
@@ -191,4 +241,31 @@ bool Repository::executeIgnore(fs::path ignored_path) {
         }
     }
     return false;
+}
+
+std::string Repository::hash_file(fs::path file_path) {
+    std::ifstream file(file_path, std::ios::binary);
+
+    if (!file) return "";
+
+    SHA256_CTX ctx;
+    SHA256_Init(&ctx);
+
+    char buffer[8192];
+
+    while (file.good()) {
+        file.read(buffer, sizeof(buffer));
+        SHA256_Update(&ctx, buffer, file.gcount());
+    }
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256_Final(hash, &ctx);
+
+    std::ostringstream result;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        result << std::hex << std::setw(2) << std::setfill('0')
+               << (int)hash[i];
+    }
+
+    return result.str();
 }
