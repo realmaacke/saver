@@ -168,7 +168,7 @@ void CreateLocalStorage(std::string config_path, std::string ssh_path)
         std::ofstream write_file(config_path + config_file);
         bool found = false;
 
-        for (const auto &l : lines)
+        for (const std::string &l : lines)
         {
             if (l.starts_with("ssh_path="))
             {
