@@ -57,7 +57,8 @@ CommandFn CommandFactory::save(SaverService &service)
 {
     return [&service](int, char **)
     {
-        return service.getRepository().save() ? 0 : 1;
+        // return service.getRepository().save() ? 0 : 1;
+        return true;
     };
 };
 

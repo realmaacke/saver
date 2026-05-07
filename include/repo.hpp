@@ -51,6 +51,7 @@ private:
     fs::path saver_path;
     fs::path index_path;
     fs::path saver_ignore;
+    fs::path commit_path;
 
     bool hasCommited = false;
 };

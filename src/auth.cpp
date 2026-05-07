@@ -97,6 +97,9 @@ std::string base64Encode(const std::vector<unsigned char> &data)
 
 std::string iterateConfig(fs::path config_file, std::string config_property)
 {
+    std::cout << "debug: " << config_file << std::endl;
+    std::cout << "debug: " << config_property << std::endl;
+
     std::fstream read_file;
     read_file.open(config_file);
 

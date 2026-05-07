@@ -9,6 +9,10 @@
 
 #include <json.hpp>
 
+#include "global_context.hpp"
+
+#include <chrono>
+
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
@@ -27,6 +31,7 @@ void Repository::init(fs::path target_directory)
     this->saver_path = target_directory / ".saver";
     this->index_path = this->saver_path / "index";
     this->saver_ignore = target_directory / ".saverIgnore";
+    this->commit_path = this->saver_path / "commit";
     return;
 };
 
@@ -38,6 +43,41 @@ bool repoExists(fs::path saver_path)
     }
     std::cout << "fatal: Saver repository not found, use command: saver init" << std::endl;
     return false;
+}
+
+std::string getCommitedMessage(fs::path commit_path)
+{
+    std::ifstream in(commit_path);
+    json j;
+
+    if (in)
+    {
+        in >> j;
+    }
+
+    if (j["message"].empty())
+    {
+        std::cout << "fatal: nothing has yet been described" << std::endl;
+    }
+    return j["message"];
+}
+
+bool storeCommitedMessage(fs::path commit_path, std::string message)
+{
+    std::ifstream in(commit_path);
+    json j;
+
+    if (in)
+    {
+        in >> j;
+    }
+
+    json entry = {
+        {"message", message}};
+
+    std::ofstream out(commit_path);
+    out << entry.dump(4);
+    return true;
 }
 
 void Repository::initRepo()
@@ -52,6 +92,12 @@ void Repository::initRepo()
     if (!fs::exists(this->index_path))
     {
         std::ofstream out(this->index_path);
+        out << "[]";
+    }
+
+    if (!fs::exists(this->commit_path))
+    {
+        std::ofstream out(this->commit_path);
         out << "[]";
     }
 
@@ -132,9 +178,15 @@ bool Repository::describe(std::string message)
         return false;
     }
 
-    /**
-     * Add the commit stuff here.
-     */
+    if (message.empty())
+    {
+        std::cout << "fatal: describe message is empty" << std::endl;
+        return false;
+    }
+
+    storeCommitedMessage(this->commit_path, message);
+
+    this->hasCommited = true;
 
     return true;
 };
@@ -151,6 +203,40 @@ bool Repository::save()
         std::cout << "All is saved, try to describe if you got a new save!" << std::endl;
         return true;
     }
+
+    json body;
+    SendRequest req;
+
+    std::string message = getCommitedMessage(this->commit_path);
+
+    if (message.empty())
+    {
+        std::cout << "fatal: you need to describe before saving!" << std::endl;
+        return false;
+    }
+
+    body['message'] = message;
+
+    Context context = getContext();
+
+    req.url = buildApiEndpoint(context, {"repo",
+                                         "user",
+                                         context.username,
+                                         "project",
+                                         context.project,
+                                         "push"});
+
+    req.json_body = body.dump();
+    req.body_type = SendRequest::BodyType::JSON;
+
+    std::optional<SendResponse> response = this->sender.send(req);
+
+    if (!response.has_value())
+    {
+        std::cout << "fatal: request failed before response" << std::endl;
+        return false;
+    }
+
     return true;
 };
 
@@ -200,7 +286,8 @@ bool Repository::addToIndex(fs::path path_to_store)
     json entry = {
         {"name", path_to_store.generic_string()},
         {"hash", hash},
-        {"status", status}};
+        {"status", status},
+        {"described", ""}};
 
     bool updatedFile = false;
     // prevent duplicates (simple version)
@@ -210,6 +297,7 @@ bool Repository::addToIndex(fs::path path_to_store)
         {
             e["hash"] = hash;
             e["status"] = status;
+            e["described"] = entry["message"];
             updatedFile = true;
             break;
         }
