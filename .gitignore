@@ -6,3 +6,4 @@ playground
 ./build
 todo.txt
 subprojects/**/
+test_environment/
