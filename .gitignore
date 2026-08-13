@@ -5,3 +5,4 @@ playground
 .saverIgnore
 ./build
 todo.txt
+subprojects/**/

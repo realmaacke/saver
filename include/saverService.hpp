@@ -7,8 +7,6 @@
 #include "repo.hpp"
 #include "sender.hpp"
 
-
-
 class SaverService {
 public:
     SaverService(std::filesystem::path target_directory)

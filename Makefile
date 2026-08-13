@@ -1,29 +1,22 @@
-CXXFLAGS := -std=c++20 -Wall -Wextra -pedantic -g -Iinclude -Iexternal
-LDFLAGS :=
-LDLIBS := -lcurl -lcrypto -lssl
-
 BUILD_DIR := build
-TARGET := $(BUILD_DIR)/saver
 MAKEFLAGS += --silent
 
-SRC := $(wildcard src/*.cpp)
-OBJ := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(SRC))
+.PHONY: all build rebuild run clean
 
-.PHONY: all clean run
+all: build
 
-all: $(TARGET)
+$(BUILD_DIR)/build.ninja:
+	meson setup $(BUILD_DIR)
 
-$(TARGET): $(OBJ) | $(BUILD_DIR)
-	$(CXX) $(OBJ) -o $@ $(LDFLAGS) $(LDLIBS)
+build: $(BUILD_DIR)/build.ninja
+	ninja -C $(BUILD_DIR)
 
-$(BUILD_DIR)/%.o: src/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+rebuild:
+	meson setup --reconfigure $(BUILD_DIR)
+	ninja -C $(BUILD_DIR)
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-run: $(TARGET)
-	./$(TARGET)
+run: build
+	./$(BUILD_DIR)/saver
 
 clean:
 	rm -rf $(BUILD_DIR)
