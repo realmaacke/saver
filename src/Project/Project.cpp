@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 #include <filesystem>
 #include "Project/Project.hpp"
@@ -24,4 +25,43 @@ void Project::set_root(const std::string& path) {
 void Project::has_root() {
     std::string saver_dir = fs::current_path().string() + "/.saver/";
     this->has_project = fs::is_directory(saver_dir);
+}
+
+
+std::string create_project_get_name(std::string path) {
+    std::string name;
+    if (path.empty()) {
+        std::cout << "Project name: ";
+        std::getline(std::cin, name);
+    } else {
+        std::string selection;
+        std::string dirName = path.substr(path.find_last_of("/") + 1);
+
+        std::cout << "Use directory name (" << dirName << ") as Project name [Y/n]: ";
+        std::getline(std::cin, selection);
+
+        if (selection == "n" || selection == "N") {
+            std::cout << "Project name: ";
+            std::getline(std::cin, name);
+        } else {
+            name = dirName;
+        }
+    }
+
+    if (name.empty()) {
+        create_project_get_name(path);
+    }
+
+    return name;
+}
+
+void Project::create_project(std::string path) {
+    std::string name;
+    std::string chapter;
+
+    std::cout << "Creating a saver project." << std::endl;
+    name = create_project_get_name(path);
+
+    std::cout << "Name of Chapter (branch): ";
+    std::cin >> chapter;
 }

@@ -32,16 +32,17 @@ cmd Command::start() {
                 Output::error("The path given is not valid.");
                 return 1;
             }
-
             Service::instance().proj().set_root(argv[1]);
+            Service::instance().proj().create_project(argv[1]);
             return 0;
         }
-
+        
         if (!std::filesystem::is_directory(".")) {
             Output::error("Not in a valid direcory.");
             return 1;
         }
         Service::instance().proj().set_root(".");
+        Service::instance().proj().create_project("");
         return 0;
     };
 }
