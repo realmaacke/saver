@@ -2,7 +2,7 @@
 #include <filesystem>
 
 class Project {
-public:
+public: 
     Project();
 
     int customize_project();
@@ -10,6 +10,8 @@ public:
     void has_root();
 
     void create_project(std::string path);
+    bool populate_cache(const std::string& path);
+    bool reset_cache();
 
 private:
     std::string root_dir;

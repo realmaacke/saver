@@ -23,6 +23,10 @@ cmd Command::help() {
 
 /**
 *
+*/
+cmd Command::project() {};
+
+/**
 *
 */
 cmd Command::start() {
@@ -46,3 +50,49 @@ cmd Command::start() {
         return 0;
     };
 }
+
+/**
+* Method that adds files to cache.
+*/
+cmd Command::add(){
+    return [](int argc, char** argv) {
+        if (argc > 1) {
+            Service::instance().proj().populate_cache(argv[1]);
+            return 0;
+        }
+        Output::error("You need to specify a path.");
+        return 1;
+    };
+};
+
+/**
+* Method that removes files from cache
+*/
+cmd Command::remove(){};
+
+
+/**
+* Method that resets the cache
+*/
+cmd Command::reset(){};
+
+
+/**
+* Method that describes the cache.
+*
+*/
+cmd Command::describe(){};
+
+
+/**
+* Method that uploads the cache.
+* In order to upload,
+*   the cache will need to be described first.
+*/
+cmd Command::upload(){};
+
+
+/**
+*   Method that downloads a project.
+*/
+cmd Command::download(){};

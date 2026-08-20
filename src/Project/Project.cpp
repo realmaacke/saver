@@ -65,3 +65,24 @@ void Project::create_project(std::string path) {
     std::cout << "Name of Chapter (branch): ";
     std::cin >> chapter;
 }
+/**
+* Method that adds files to cache.
+* Called from Command::add();
+*/
+bool Project::populate_cache(const std::string& path) {
+    if (!fs::is_regular_file(this->root_dir + path)
+        || !fs::is_directory(this->root_dir + path))
+    {
+        Output::error("Path is not valid.");
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
+* Method that adds files to cache.
+*/
+bool Project::reset_cache() {
+    return 0;
+}

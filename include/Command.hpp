@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <functional>
 
 using cmd = std::function<int(int, char**)>;
@@ -7,7 +6,15 @@ using cmd = std::function<int(int, char**)>;
 class Command {
 public:
     static cmd help();
+    static cmd project();
+
     static cmd start();
+    static cmd add();
+    static cmd remove();
+    static cmd reset();
+    static cmd describe();
+    static cmd upload();
+    static cmd download();
 
     // static cmd init(SaverService& service);
     // static cmd status(SaverService& service);

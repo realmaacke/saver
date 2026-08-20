@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Core.hpp"
 #include "Command.hpp"
 #include <functional>
@@ -20,12 +21,20 @@ int Core::execute(const std::string& name, int argc, char** argv) {
 }
 
 /**
-* P
+* Populates cmd list.
 * */
 void Core::populate_cmd_list() {
     this->cmd_list = {
         {"help", Command::help()},
-        {"start", Command::start()}
+        {"project", Command::project()},
+
+        {"start", Command::start()},
+        {"add", Command::add()},
+        {"remove", Command::remove()},
+        {"reset", Command::reset()},
+        {"describe", Command::describe()},
+        {"upload", Command::upload()},
+        {"download", Command::download()},
     };
 }
 
