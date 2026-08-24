@@ -27,7 +27,7 @@ add_project_arguments(
 
 executable('saver',
   sources,
-  install: true,
+  install: false,
   include_directories : inc,
   dependencies : [curl_dep, crypto_dep, ssl_dep, json_dep]
 )

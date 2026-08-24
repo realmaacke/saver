@@ -7,13 +7,13 @@
 
 
 fs::path Storage::getResourcePath(const std::string& fileName) {
-    // 1. Try dev/local path (relative to current working directory)
+    // Try dev/local path (relative to current working directory)
     fs::path local_path = fs::path("resources") / fileName;
     if (fs::exists(local_path)) {
         return local_path;
     }
 
-    // 2. Fallback to installed system path passed via Meson (-DAPP_RESOURCE_DIR)
+    // Fallback to installed system path passed via Meson (-DAPP_RESOURCE_DIR)
     #ifdef APP_RESOURCE_DIR
     fs::path installed_path = fs::path(APP_RESOURCE_DIR) / fileName;
     if (fs::exists(installed_path)) {
@@ -124,10 +124,17 @@ void Storage::addToConfig(const std::string& key, const std::string& value) {
 }
 
 bool Storage::createConfigFile() {
-    if (fs::exists(this->getConfigFile())) {
+    const std::string configPath = this->getConfigFile();
+    const std::string basePath = this->getResourcePath("config_base.ini");
+
+    if (fs::exists(configPath)) {
         return true;
     }
-    std::ofstream configFile(this->getConfigFile());
-    configFile.close();
-    return false;
+
+    try {
+        fs::copy_file(basePath, configPath);
+        return true;
+    } catch (const fs::filesystem_error&) {
+        return false;
+    }
 }
