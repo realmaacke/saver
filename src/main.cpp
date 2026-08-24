@@ -14,6 +14,9 @@ int main(int argc, char** argv) {
         Service::instance().store().loadConfig();
     }
 
+    // Ensures that logged in user, stays logged in.
+    Service::instance().user().alreadyConnectedUser();
+
     if (argc < 2) {
         std::cout << "Saver: unknown command" << std::endl;
         return 1;
