@@ -10,6 +10,8 @@ public:
     int createConfigDirectory();
     bool createConfigFile();
 
+    fs::path getResourcePath(const std::string& fileName);
+
     bool loadConfig();
     bool saveConfig();
 

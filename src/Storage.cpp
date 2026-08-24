@@ -5,6 +5,25 @@
 #include <iostream>
 #include <string>
 
+
+fs::path Storage::getResourcePath(const std::string& fileName) {
+    // 1. Try dev/local path (relative to current working directory)
+    fs::path local_path = fs::path("resources") / fileName;
+    if (fs::exists(local_path)) {
+        return local_path;
+    }
+
+    // 2. Fallback to installed system path passed via Meson (-DAPP_RESOURCE_DIR)
+    #ifdef APP_RESOURCE_DIR
+    fs::path installed_path = fs::path(APP_RESOURCE_DIR) / fileName;
+    if (fs::exists(installed_path)) {
+        return installed_path;
+    }
+    #endif
+
+    throw std::runtime_error("Resource not found: " + fileName);
+}
+
 fs::path Storage::getConfigDirectory() {
     char* location = nullptr;
     constexpr const char* folderName = "saver";
