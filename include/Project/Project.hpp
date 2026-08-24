@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <filesystem>
 
@@ -10,6 +11,8 @@ public:
     void has_root();
 
     void create_project(std::string path);
+    void createProjectFiles();
+
     bool populate_cache(const std::string& path);
     bool reset_cache();
 

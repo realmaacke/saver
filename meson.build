@@ -10,6 +10,7 @@ project('saver', 'cpp',
 curl_dep    = dependency('libcurl', fallback : ['curl', 'curl_dep'])
 crypto_dep  = dependency('libcrypto', fallback : ['openssl', 'libcrypto_dep'])
 ssl_dep     = dependency('libssl', fallback : ['openssl', 'libssl_dep'])
+json_dep    = dependency('nlohmann_json')
 
 sources = run_command('find', 'src', '-name', '*.cpp', check: true).stdout().strip().split('\n')
 inc = include_directories('include', 'external')
@@ -17,5 +18,5 @@ inc = include_directories('include', 'external')
 executable('saver',
   sources,
   include_directories : inc,
-  dependencies : [curl_dep, crypto_dep, ssl_dep]
+  dependencies : [curl_dep, crypto_dep, ssl_dep, json_dep]
 )

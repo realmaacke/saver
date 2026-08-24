@@ -35,6 +35,8 @@ void Core::populate_cmd_list() {
         {"describe", Command::describe()},
         {"upload", Command::upload()},
         {"download", Command::download()},
+
+        {"login", Command::login()}
     };
 }
 

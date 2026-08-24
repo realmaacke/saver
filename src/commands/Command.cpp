@@ -1,4 +1,3 @@
-#include <cstddef>
 #include <functional>
 #include <string>
 #include <filesystem>
@@ -16,6 +15,7 @@ using cmd = std::function<int(int, char **)>;
 * */
 cmd Command::help() {
     return [](int, char**) {
+        Service::instance().store().addToConfig("API_PORT", "8080");
         Output::print("Help is here!");
         return 1;
     };
@@ -24,7 +24,11 @@ cmd Command::help() {
 /**
 *
 */
-cmd Command::project() {};
+cmd Command::project() {
+    return [](int, char**) {
+        return 0;
+    };
+};
 
 /**
 *
@@ -68,20 +72,32 @@ cmd Command::add(){
 /**
 * Method that removes files from cache
 */
-cmd Command::remove(){};
+cmd Command::remove(){
+    return [](int, char**) {
+        return 0;
+    };
+};
 
 
 /**
 * Method that resets the cache
 */
-cmd Command::reset(){};
+cmd Command::reset(){
+    return [](int, char**) {
+        return 0;
+    };
+};
 
 
 /**
 * Method that describes the cache.
 *
 */
-cmd Command::describe(){};
+cmd Command::describe(){
+    return [](int, char**) {
+        return 0;
+    };
+};
 
 
 /**
@@ -89,10 +105,30 @@ cmd Command::describe(){};
 * In order to upload,
 *   the cache will need to be described first.
 */
-cmd Command::upload(){};
+cmd Command::upload(){
+    return [](int, char**) {
+        return 0;
+    };
+};
 
 
 /**
 *   Method that downloads a project.
 */
-cmd Command::download(){};
+cmd Command::download(){
+    return [](int, char**) {
+        return 0;
+    };
+};
+
+
+cmd Command::login() {
+    return [](int argc, char** argv) {
+        if (argc < 3) {
+            Output::print("Invalid use of command");
+            Output::print("Syntax: login <username> <password>");
+            return 0;
+        }
+        return Service::instance().user().connectUser(argv[1], argv[2]);
+    };
+};

@@ -16,6 +16,9 @@ public:
     static cmd upload();
     static cmd download();
 
+    // Authentication
+    static cmd login();
+
     // static cmd init(SaverService& service);
     // static cmd status(SaverService& service);
     // static cmd add(SaverService& service);

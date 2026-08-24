@@ -63,7 +63,9 @@ void Project::create_project(std::string path) {
     name = create_project_get_name(path);
 
     std::cout << "Name of Chapter (branch): ";
-    std::cin >> chapter;
+    std::getline(std::cin, chapter);
+
+    this->createProjectFiles();
 }
 /**
 * Method that adds files to cache.
@@ -85,4 +87,10 @@ bool Project::populate_cache(const std::string& path) {
 */
 bool Project::reset_cache() {
     return 0;
+}
+
+void Project::createProjectFiles() {
+    // create .saver dir.
+    // create .saver/info.ini ? or json
+    // create chache file
 }

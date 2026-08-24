@@ -1,11 +1,19 @@
 #include <iostream>
 #include "Core/Core.hpp"
+#include "Service.hpp"
 
 /**
 * Fill this out.
 * */
 int main(int argc, char** argv) { 
     Core saver_core;
+
+    // Internal config
+    Service::instance().store().createConfigDirectory();
+    if (Service::instance().store().createConfigFile()) {
+        Service::instance().store().loadConfig();
+    }
+
     if (argc < 2) {
         std::cout << "Saver: unknown command" << std::endl;
         return 1;
