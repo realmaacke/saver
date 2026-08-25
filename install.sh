@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/yourusername/saver.git"
+# meson.build needs to turn on install: true if this were to work.
+
+REPO_URL="https://github.com/realmaacke/saver.git"
 TEMP_DIR=$(mktemp -d)
 
 cleanup() {
