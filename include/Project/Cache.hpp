@@ -10,7 +10,9 @@ struct CacheEntry {
 class Cache {
 public:
     Cache();
-    void add(const std::filesystem::path& file);
+    bool add(const std::filesystem::path& file);
+    void remove(const std::filesystem::path& path);
+
     const std::vector<CacheEntry>& entries() const;
     void clear();
 

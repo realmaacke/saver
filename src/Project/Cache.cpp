@@ -12,31 +12,56 @@ Cache::Cache() {
     }
 }
 
-void Cache::add(const std::filesystem::path& file) {
+bool Cache::add(const std::filesystem::path& file) {
     if (!fs::exists(file)) {
         Output::error("File does not exist");
-        return;
+        return false;
     }
 
     if (fs::is_directory(file)) {
         for (const fs::directory_entry& entry : fs::recursive_directory_iterator(file)) {
             if (entry.is_regular_file()) {
+                
                 this->add_file(
                     entry.path(),
-                    fs::relative(entry.path(), file.parent_path()));
+                    fs::relative(fs::absolute(entry.path()), fs::absolute(file).parent_path())
+                );
             }
         }
-        return;
+        return true;
     }
 
     if (fs::is_regular_file(file)) {
         add_file(file, file.filename());
-        return;
+        return true;
     }
 
     Output::error("File is not regular");
-    return;
+    return false;
 };
+
+void Cache::remove(const fs::path& path) {
+    fs::path target = fs::absolute(path);
+ 
+    auto is_under_target = [&](const CacheEntry& entry) {
+        fs::path abs_original = fs::absolute(entry.original_path);
+        fs::path rel = fs::relative(abs_original, target);
+        // "." means exact match; anything not starting with ".." is inside target.
+        return !rel.empty() && *rel.begin() != "..";
+    };
+ 
+    auto it = entries_.begin();
+    while (it != entries_.end()) {
+        if (is_under_target(*it)) {
+            std::error_code ec;
+            fs::remove(it->cached_path, ec); // best-effort; ignore if already gone
+            it = entries_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 
 void Cache::add_file(const std::filesystem::path& file, const std::filesystem::path& relative_path) {
     fs::path dest = this->cache_dir / relative_path;

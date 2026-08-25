@@ -73,7 +73,14 @@ cmd Command::add(){
 * Method that removes files from cache
 */
 cmd Command::remove(){
-    return [](int, char**) {
+    return [](int argc, char** argv) {
+        if (argc < 2) {
+            Output::print("You need to specify path to remove");
+            Output::print("Syntax: saver remove path/to/file");
+            return 1;
+        }
+        std::string describe_message = argv[1];
+        Service::instance().proj().describe_cache(describe_message);
         return 0;
     };
 };
@@ -84,7 +91,8 @@ cmd Command::remove(){
 */
 cmd Command::reset(){
     return [](int, char**) {
-        return 0;
+        Output::print("Cache has been cleared");
+        return Service::instance().proj().reset_cache();
     };
 };
 
@@ -94,7 +102,14 @@ cmd Command::reset(){
 *
 */
 cmd Command::describe(){
-    return [](int, char**) {
+    return [](int argc, char** argv) {
+        if (argc < 2) {
+            Output::print("You need to describe the changes.");
+            Output::print("Syntax: saver \"describe here\"");
+            return 1;
+        }
+        std::string describe_message = argv[1];
+        Service::instance().proj().describe_cache(describe_message);
         return 0;
     };
 };

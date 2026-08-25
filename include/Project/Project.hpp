@@ -1,4 +1,8 @@
 #pragma once
+#include "Project/Cache.hpp"
+#include "Project/CacheStore.hpp"
+#include "Project/Head.hpp"
+#include "Project/RefStore.hpp"
 #include <string>
 #include <filesystem>
 
@@ -16,8 +20,16 @@ public:
     bool populate_cache(const std::string& path);
     bool reset_cache();
 
+    bool describe_cache(std::string& message);
+    bool remove_from_cache(const std::string& path);
+
 private:
     std::string root_dir;
     // Used with other commands.
     bool has_project;
+
+    Cache cache_;
+    CacheStore cacheStore_;
+    RefStore refStore_;
+    Head head_;
 };

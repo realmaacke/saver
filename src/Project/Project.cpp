@@ -1,8 +1,13 @@
+#include <chrono>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <filesystem>
 #include "Project/Project.hpp"
 #include "Output/Output.hpp"
+#include "Project/Cache.hpp"
+#include "Project/Describe.hpp"
+#include "Project/Tree.hpp"
 
 
 namespace fs = std::filesystem;
@@ -72,25 +77,56 @@ void Project::create_project(std::string path) {
 * Called from Command::add();
 */
 bool Project::populate_cache(const std::string& path) {
-    if (!fs::is_regular_file(this->root_dir + path)
-        || !fs::is_directory(this->root_dir + path))
-    {
-        Output::error("Path is not valid.");
-        return 1;
-    }
-
-    return 0;
+    this->cache_.add(path);
+    return false;
 }
 
 /**
 * Method that adds files to cache.
 */
 bool Project::reset_cache() {
-    return 0;
+    this->cache_.clear();
+    return true;
+}
+
+bool Project::remove_from_cache(const std::string& path) {
+    Output::print("Removed file: " + path);
+    this->cache_.remove(path);
+    return true;
 }
 
 void Project::createProjectFiles() {
     // create .saver dir.
     // create .saver/info.ini ? or json
     // create chache file
+}
+
+bool Project::describe_cache(std::string& message) {
+    std::string branch = this->head_.branch();
+
+    Tree tree;
+
+    for (const CacheEntry& entry : this->cache_.entries()) {
+        std::string hash = this->cacheStore_.store(entry.cached_path);
+        tree.add(entry.original_path, hash);
+    }
+
+    std::string tree_hash = this->cacheStore_.store_bytes(tree.serialize());
+
+    std::optional<std::string> parent = this->refStore_.get(branch);
+
+    // Creating the describe.
+    Describe desc;
+
+    desc.tree_hash = tree_hash;
+    desc.parent_hash = parent;
+    desc.message = message;
+    desc.timestamp = std::chrono::system_clock::now();
+    std::string describe_hash = this->cacheStore_.store_bytes(desc.serialize());
+
+    this->refStore_.set(branch, describe_hash);
+    this->cache_.clear();
+
+    Output::print("Described: " + describe_hash);
+    return true;
 }
