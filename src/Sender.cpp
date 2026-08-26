@@ -1,4 +1,6 @@
 #include "Shipper/Sender.hpp"
+#include "Service.hpp"
+#include <iostream>
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -7,8 +9,22 @@ void Sender::setToken(const std::string& token) {
     this->token = token;
 }
 
-void Sender::setBaseUrl(const std::string& url) {
-    this->baseUrl = url;
+/**
+ * Called from main.cpp
+ * Sets API-URL from config.
+ */
+void Sender::setBaseUrl() {
+    std::string url = Service::instance()
+            .store().getFromConfig("API_URL");
+    
+    std::string port = Service::instance()
+        .store().getFromConfig("API_PORT");
+
+
+    // Removes " from str, which  may come from .ini file.
+    std::erase(url, '"');
+
+    this->baseUrl = url + ":" + port + "/";
 }
 
 std::string Sender::request(
@@ -22,7 +38,8 @@ std::string Sender::request(
             throw std::runtime_error("failed to init curl");
         }
 
-        std::string url = baseUrl + path;
+        std::string url = this->baseUrl + path;
+
         std::string response;
         struct curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");

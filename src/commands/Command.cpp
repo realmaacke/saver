@@ -15,9 +15,22 @@ using cmd = std::function<int(int, char **)>;
 * */
 cmd Command::help() {
     return [](int, char**) {
-        Service::instance().store().addToConfig("API_PORT", "8080");
-        Output::print("Help is here!");
-        return 1;
+        Output::print("[General Commands]");
+        Output::print("help     - Displays all available commands \n");
+
+        Output::print("[Project Specific Commands]");
+        Output::print("saver project <path/to/root> - Displays information about the current project");
+        Output::print("saver start <path/to/root> - Starts a new project");
+        Output::print("saver add <path/to/file(s) - Adds file(s) to cache");
+        Output::print("saver remove <path/to/file(s) - Removes file(s) from cache");
+        Output::print("saver describe <message> - Describes the changes made in cache");
+        Output::print("saver upload ? - uploads the cache");
+        Output::print("saver download <username/project_name> - Downloads a specific project \n");
+
+        Output::print("saver connect <username> <password> - Connects to the remote");
+        Output::print("saver disconnect - Disconnects from the remote");
+
+        return 0;
     };
 }
 
@@ -152,3 +165,9 @@ cmd Command::login() {
         return Service::instance().user().connectUser(argv[1], argv[2]);
     };
 };
+
+cmd Command::disconnect() {
+    return [](int, char**) {
+        return Service::instance().user().disconnectUser();
+    };
+}

@@ -45,13 +45,26 @@ int User::connectUser(const std::string& username, const std::string& password) 
             false
     );
 
+    
     if (res.success && res.token.is_string()) {
         Service::instance().send().setToken(res.token);
         Service::instance().store().addToConfig("API_TOKEN", res.token);
         Output::print("Connection successful!");
         return 0;
     }
-
+    
     Output::error(res.message);
     return 1;
+}
+
+int User::disconnectUser() {
+    if (!this->alreadyConnectedUser()) {
+        Output::print("You are not connected to remote");
+        return 0;
+    }
+
+    Service::instance().store().addToConfig("API_TOKEN", "");
+
+    Output::print("You have been disconnected from remote");
+    return 0;
 }

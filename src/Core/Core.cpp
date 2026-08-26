@@ -36,7 +36,8 @@ void Core::populate_cmd_list() {
         {"upload", Command::upload()},
         {"download", Command::download()},
 
-        {"login", Command::login()}
+        {"connect", Command::login()},
+        {"disconnect", Command::disconnect()}
     };
 }
 

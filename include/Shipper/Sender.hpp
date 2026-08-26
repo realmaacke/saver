@@ -8,7 +8,7 @@
 class Sender {
 public:
     void setToken(const std::string& token);
-    void setBaseUrl(const std::string& url);
+    void setBaseUrl();
 
     template<typename ResponseDTO>
     ResponseDTO get(const std::string& path, bool useAuth) {
@@ -23,7 +23,7 @@ public:
         return nlohmann::json::parse(raw).get<ResponseDTO>();
     };
 private:
-    std::string baseUrl = "http://localhost:8080/";
+    std::string baseUrl;
     std::string token;
 
     static size_t writeCallback(

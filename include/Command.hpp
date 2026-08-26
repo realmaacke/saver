@@ -18,6 +18,7 @@ public:
 
     // Authentication
     static cmd login();
+    static cmd disconnect();
 
     // static cmd init(SaverService& service);
     // static cmd status(SaverService& service);
