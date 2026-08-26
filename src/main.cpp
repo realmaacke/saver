@@ -17,6 +17,9 @@ int main(int argc, char** argv) {
     // Ensures that logged in user, stays logged in.
     Service::instance().user().alreadyConnectedUser();
 
+    // checks if user already stands in a project.
+    Service::instance().proj().check_if_in_project();
+
     if (argc < 2) {
         std::cout << "Saver: unknown command" << std::endl;
         return 1;

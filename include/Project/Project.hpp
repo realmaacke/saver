@@ -1,35 +1,33 @@
 #pragma once
-#include "Project/Cache.hpp"
-#include "Project/CacheStore.hpp"
-#include "Project/Head.hpp"
-#include "Project/RefStore.hpp"
+#include "Project/Object.hpp"
 #include <string>
 #include <filesystem>
+
+struct project_info {
+    std::string proj_name;
+    std::string author;
+};
 
 class Project {
 public: 
     Project();
 
-    int customize_project();
-    void set_root(const std::string& path);
-    void has_root();
+    // Runs every start,
+    // checks if proj is initialized
+    void check_if_in_project();
 
-    void create_project(std::string path);
-    void createProjectFiles();
+    // Create a new project
+    int create_new_project(
+        const std::string& proj_path,
+        const std::string& optional_flag = ""
+    );
 
-    bool populate_cache(const std::string& path);
-    bool reset_cache();
-
-    bool describe_cache(std::string& message);
-    bool remove_from_cache(const std::string& path);
+    project_info create_project_interface(
+        const std::string& proj_path
+    );
+    //
 
 private:
-    std::string root_dir;
-    // Used with other commands.
-    bool has_project;
-
-    Cache cache_;
-    CacheStore cacheStore_;
-    RefStore refStore_;
-    Head head_;
+    std::string root_dir = "";
+    Object object_;
 };

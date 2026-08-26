@@ -35,23 +35,27 @@ cmd Command::project() {
 */
 cmd Command::start() {
     return [](int argc, char** argv) {
-        if (argc > 1) {
-            if (!fs::is_directory(argv[1])) {
-                Output::error("The path given is not valid.");
-                return 1;
-            }
-            Service::instance().proj().set_root(argv[1]);
-            Service::instance().proj().create_project(argv[1]);
-            return 0;
+        switch (argc) {
+            case 3:
+                return Service::instance()
+                    .proj()
+                    .create_new_project(
+                    argv[1],
+                    argv[2]
+                    );
+            break;
+            case 2:
+                return Service::instance()
+                    .proj()
+                    .create_new_project(argv[1]);
+            break;
         }
-        
+
         if (!std::filesystem::is_directory(".")) {
             Output::error("Not in a valid direcory.");
             return 1;
         }
-        Service::instance().proj().set_root(".");
-        Service::instance().proj().create_project("");
-        return 0;
+        return Service::instance().proj().create_new_project(".");
     };
 }
 
@@ -61,7 +65,7 @@ cmd Command::start() {
 cmd Command::add(){
     return [](int argc, char** argv) {
         if (argc > 1) {
-            Service::instance().proj().populate_cache(argv[1]);
+            // Service::instance().proj().populate_cache(argv[1]);
             return 0;
         }
         Output::error("You need to specify a path.");
@@ -80,7 +84,7 @@ cmd Command::remove(){
             return 1;
         }
         std::string describe_message = argv[1];
-        Service::instance().proj().describe_cache(describe_message);
+        // Service::instance().proj().describe_cache(describe_message);
         return 0;
     };
 };
@@ -92,7 +96,8 @@ cmd Command::remove(){
 cmd Command::reset(){
     return [](int, char**) {
         Output::print("Cache has been cleared");
-        return Service::instance().proj().reset_cache();
+        // return Service::instance().proj().reset_cache();
+        return 0;
     };
 };
 
@@ -109,7 +114,7 @@ cmd Command::describe(){
             return 1;
         }
         std::string describe_message = argv[1];
-        Service::instance().proj().describe_cache(describe_message);
+        // Service::instance().proj().describe_cache(describe_message);
         return 0;
     };
 };

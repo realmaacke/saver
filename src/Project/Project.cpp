@@ -1,132 +1,69 @@
-#include <chrono>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <filesystem>
 #include "Project/Project.hpp"
 #include "Output/Output.hpp"
-#include "Project/Cache.hpp"
-#include "Project/Describe.hpp"
-#include "Project/Tree.hpp"
-
+#include "Project/Object.hpp"
+#include "Service.hpp"
+#include "Utility/Ini.hpp"
 
 namespace fs = std::filesystem;
 
 Project::Project() {
-    this->has_project = false;
-    this->has_root();
+    
 }
 
-/**
-* Method creates a new Project.
+/*
+* Runs on every start.
+* Called from main.cpp
 */
-void Project::set_root(const std::string& path) {
-    this->root_dir = path;
+void Project::check_if_in_project() {
+    if (fs::exists(".saver/proj.ini")) {
+        this->root_dir = ".";
+        return;
+    }
+    return;
 }
 
-/**
-* Called at start to check if in Project.
-*/
-void Project::has_root() {
-    std::string saver_dir = fs::current_path().string() + "/.saver/";
-    this->has_project = fs::is_directory(saver_dir);
-}
-
-
-std::string create_project_get_name(std::string path) {
-    std::string name;
-    if (path.empty()) {
-        std::cout << "Project name: ";
-        std::getline(std::cin, name);
-    } else {
-        std::string selection;
-        std::string dirName = path.substr(path.find_last_of("/") + 1);
-
-        std::cout << "Use directory name (" << dirName << ") as Project name [Y/n]: ";
-        std::getline(std::cin, selection);
-
-        if (selection == "n" || selection == "N") {
-            std::cout << "Project name: ";
-            std::getline(std::cin, name);
-        } else {
-            name = dirName;
-        }
+int Project::create_new_project(
+    const std::string& proj_path,
+    const std::string& optional_flag) {
+    
+    // if not signed in, then return;
+    if (!Service::instance().user().alreadyConnectedUser()) {
+        Output::error("You must be logged in to create a project");
+        Output::print("Use: saver login <username> <password> | to login");
+        return 1;
     }
 
-    if (name.empty()) {
-        create_project_get_name(path);
+    if (!fs::exists(proj_path)) {
+        Output::error("Project path is invalid");
+        return 1;
     }
 
-    return name;
-}
+    bool optional = (!optional_flag.empty() && optional_flag == "-f");
 
-void Project::create_project(std::string path) {
-    std::string name;
-    std::string chapter;
-
-    std::cout << "Creating a saver project." << std::endl;
-    name = create_project_get_name(path);
-
-    std::cout << "Name of Chapter (branch): ";
-    std::getline(std::cin, chapter);
-
-    this->createProjectFiles();
-}
-/**
-* Method that adds files to cache.
-* Called from Command::add();
-*/
-bool Project::populate_cache(const std::string& path) {
-    this->cache_.add(path);
-    return false;
-}
-
-/**
-* Method that adds files to cache.
-*/
-bool Project::reset_cache() {
-    this->cache_.clear();
-    return true;
-}
-
-bool Project::remove_from_cache(const std::string& path) {
-    Output::print("Removed file: " + path);
-    this->cache_.remove(path);
-    return true;
-}
-
-void Project::createProjectFiles() {
-    // create .saver dir.
-    // create .saver/info.ini ? or json
-    // create chache file
-}
-
-bool Project::describe_cache(std::string& message) {
-    std::string branch = this->head_.branch();
-
-    Tree tree;
-
-    for (const CacheEntry& entry : this->cache_.entries()) {
-        std::string hash = this->cacheStore_.store(entry.cached_path);
-        tree.add(entry.original_path, hash);
+    if (!fs::is_empty(proj_path) && !optional) {
+        Output::print("Directory is not empty.");
+        Output::print("To force create an directory, add -f flag");
+        return 1;
     }
 
-    std::string tree_hash = this->cacheStore_.store_bytes(tree.serialize());
+    if (!fs::is_empty(proj_path) && optional) {
+        Output::print("Creating project inside : " + proj_path);
+        project_info proj_info = this->create_project_interface(proj_path);
+        return 0;
+    }
 
-    std::optional<std::string> parent = this->refStore_.get(branch);
+    Output::print("Creating project");
 
-    // Creating the describe.
-    Describe desc;
+}
 
-    desc.tree_hash = tree_hash;
-    desc.parent_hash = parent;
-    desc.message = message;
-    desc.timestamp = std::chrono::system_clock::now();
-    std::string describe_hash = this->cacheStore_.store_bytes(desc.serialize());
+project_info Project::create_project_interface(const std::string& proj_path) {
+    project_info proj_info;
 
-    this->refStore_.set(branch, describe_hash);
-    this->cache_.clear();
+    Output::print("Name of project:");
+    std::cin >> proj_info.proj_name;
 
-    Output::print("Described: " + describe_hash);
-    return true;
+    return proj_info;
 }
