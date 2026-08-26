@@ -1,9 +1,7 @@
 #pragma once
-#include "Output/Output.hpp"
 #include <curl/curl.h>
 #include <string>
 #include <nlohmann/json.hpp>
-
 
 class Sender {
 public:
@@ -21,7 +19,8 @@ public:
         nlohmann::json j = body;
         std::string raw = this->request("POST", path, j.dump(), useAuth);
         return nlohmann::json::parse(raw).get<ResponseDTO>();
-    };
+    }
+
 private:
     std::string baseUrl;
     std::string token;

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -14,7 +13,7 @@ struct RenewToken {
             token,
             success,
             message
-        );
+        )
     };
 };
 
@@ -27,7 +26,7 @@ struct ConnectUser {
             Request,
             username,
             password
-        );
+        )
     };
 
     struct Response {
@@ -40,6 +39,6 @@ struct ConnectUser {
             token,
             success,
             message
-        );
+        )
     };
 };

@@ -7,7 +7,6 @@
 #include "Output/Output.hpp"
 
 // Uses cmd as return to return lambda
-namespace fs = std::filesystem;
 using cmd = std::function<int(int, char **)>;
 
 /**
@@ -76,11 +75,11 @@ cmd Command::start() {
 * Method that adds files to cache.
 */
 cmd Command::add(){
-    return [](int argc, char** argv) {
-        if (argc > 1) {
-            // Service::instance().proj().populate_cache(argv[1]);
-            return 0;
-        }
+    return [](int, char**) {
+        // if (argc > 1) {
+        //     // Service::instance().proj().populate_cache(argv[1]);
+        //     return 0;
+        // }
         Output::error("You need to specify a path.");
         return 1;
     };
