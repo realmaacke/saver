@@ -1,15 +1,12 @@
 #pragma once
+#include "Project/Cache.hpp"
 #include "Project/Object.hpp"
 #include <string>
 #include <filesystem>
 
-struct project_info {
-    std::string proj_name;
-    std::string author;
-};
 
 class Project {
-public: 
+public:
     Project();
 
     // Runs every start,
@@ -22,12 +19,15 @@ public:
         const std::string& optional_flag = ""
     );
 
-    project_info create_project_interface(
-        const std::string& proj_path
+    const std::string create_project_name(
+        const std::string& proj_path,
+        const std::string& username
     );
-    //
 
 private:
     std::string root_dir = "";
+
+    
+    Cache cache_;
     Object object_;
 };
