@@ -126,8 +126,8 @@ cmd Command::describe(){
             return 1;
         }
         std::string describe_message = argv[1];
-        // Service::instance().proj().describe_cache(describe_message);
-        return 0;
+        return Service::instance()
+            .proj().describe_cache(describe_message);
     };
 };
 

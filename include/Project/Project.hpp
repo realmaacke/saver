@@ -25,6 +25,7 @@ public:
     );
 
     int add_files_in_project(const std::string& file);
+    int describe_cache(const std::string& message);
 
 private:
     std::string root_dir = "";

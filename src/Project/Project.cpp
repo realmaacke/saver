@@ -129,3 +129,16 @@ int Project::add_files_in_project(const std::string& path) {
     Output::print("DEBUG: file added");
     return 0;
 }
+
+int Project::describe_cache(const std::string& message) {
+    if (message.empty()) {
+        Output::print("The describe cant be empty");
+        return 0;
+    }
+
+    // take all the blobs and stuff and create a tree.
+    // here we will have to manage refs.
+    // 
+
+    return 0;
+}
