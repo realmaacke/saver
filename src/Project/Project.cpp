@@ -11,7 +11,7 @@
 namespace fs = std::filesystem;
 
 Project::Project() {
-    
+    this->object_.create_obj_directory(this->root_dir); 
 }
 
 /*
@@ -103,6 +103,29 @@ const std::string Project::create_project_name(const std::string& proj_path, con
 
     // Contact remote to check if user has same name.
 
-
+ 
     return name;
+}
+
+int Project::add_files_in_project(const std::string& path) {
+    if (!fs::exists(path)) {
+        Output::error("Invalid path to file");
+        return 1;
+    }
+
+    if (!fs::is_directory(path) && fs::is_regular_file(path)) {
+        this->cache_.add_to_cache(path);
+    }
+
+    if (fs::is_directory(path)) {
+        for (const fs::directory_entry& entry : fs::directory_iterator(path)) {
+            if (fs::is_directory(entry)) {
+                this->add_files_in_project(entry.path());
+            }
+            this->cache_.add_to_cache(entry.path());
+        }
+    }
+
+    Output::print("DEBUG: file added");
+    return 0;
 }

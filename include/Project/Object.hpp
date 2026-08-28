@@ -5,8 +5,10 @@ namespace fs = std::filesystem;
 
 class Object {
 public:
-    void set_object_dir(const fs::path& root_dir);
-    fs::path get_object_dir();
+    void create_obj_directory(const fs::path& root_path);
+    // Create directory.
+    // Append files to the object/
+    // return files from object/
 private:
-    fs::path object_dir;
+    std::string obj_dir = "";
 };

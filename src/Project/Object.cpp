@@ -1,12 +1,18 @@
 #include "Project/Object.hpp"
+#include "Output/Output.hpp"
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
-void Object::set_object_dir(const fs::path& root_dir) {
-    this->object_dir = fs::path(root_dir / "/objects/");
-}
+void Object::create_obj_directory(const fs::path& root_dir) {
+    if (root_dir.empty()) {
+        Output::error("Root dir is not set.");
+        return;
+    }
 
-fs::path Object::get_object_dir() {
-    return this->object_dir;
-}
+    this->obj_dir = fs::path(root_dir / "/objects/");
+
+    if (!fs::exists(this->obj_dir)) {
+        fs::create_directories(this->obj_dir);
+    }
+};

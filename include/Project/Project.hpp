@@ -24,6 +24,8 @@ public:
         const std::string& username
     );
 
+    int add_files_in_project(const std::string& file);
+
 private:
     std::string root_dir = "";
 
