@@ -103,7 +103,6 @@ const std::string Project::create_project_name(const std::string& proj_path, con
 
     // Contact remote to check if user has same name.
 
- 
     return name;
 }
 

@@ -1,11 +1,12 @@
 #pragma once
+#include "Project/Object.hpp"
 #include <optional>
 #include <string>
 #include <vector>
 
 struct CacheType {
     std::string path;
-    // add hash here.
+    std::string hash;
 };
 
 class Cache{
@@ -15,4 +16,5 @@ public:
 
 private:
     std::vector<CacheType> cache_store;
+    Object object_;
 };
