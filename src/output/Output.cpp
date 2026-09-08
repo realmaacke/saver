@@ -15,3 +15,7 @@ void Output::multiple_errors(std::vector<std::string> &messages) {
         std::cout << "[Saver]: " << msg.c_str() << std::endl;
     }
 }
+
+void Output::debug(const std::string &type, const std::string &msg) {
+    std::cout << "["+ type +"]" << msg.c_str() << std::endl;
+}

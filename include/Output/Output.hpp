@@ -4,6 +4,7 @@
 class Output {
     // TODO:: Add color support
 public:
+    static void debug(const std::string& type, const std::string& msg);
     static void error(const std::string& msg);
     static void print(const std::string& msg);
     static void multiple_errors(std::vector<std::string>& messages);
