@@ -11,7 +11,12 @@ public:
 
     // Runs every start,
     // checks if proj is initialized
-    void check_if_in_project();
+    bool check_if_in_project();
+
+    void create_saver_files(
+        const fs::path& proj_path,
+        const std::string& name
+    );
 
     // Create a new project
     int create_new_project(
@@ -20,8 +25,7 @@ public:
     );
 
     const std::string create_project_name(
-        const std::string& proj_path,
-        const std::string& username
+        const std::string& proj_path
     );
 
     int add_files_in_project(const std::string& file);

@@ -37,7 +37,10 @@ void Core::populate_cmd_list() {
         {"download", Command::download()},
 
         {"connect", Command::login()},
-        {"disconnect", Command::disconnect()}
+        {"disconnect", Command::disconnect()},
+
+        // Remove this in prod
+        {"sandbox", Command::sandbox()}
     };
 }
 

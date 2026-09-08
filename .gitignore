@@ -8,3 +8,4 @@ todo.txt
 subprojects/**/
 test_environment/
 .cache
+sandbox

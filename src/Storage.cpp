@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "Storage.hpp"
+#include "Output/Output.hpp"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -101,7 +102,6 @@ bool Storage::saveConfig() {
     if (!file.is_open()) {
         return false;
     }
-
     for (std::map<std::string, std::string>::const_iterator it = this->values.begin();
          it != this->values.end(); ++it) {
         file << it->first << "=" << it->second << "\n";

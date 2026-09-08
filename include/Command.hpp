@@ -19,4 +19,7 @@ public:
     // Authentication
     static cmd login();
     static cmd disconnect();
+
+    // Remove in prod
+    static cmd sandbox();
 };

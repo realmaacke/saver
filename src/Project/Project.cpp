@@ -1,12 +1,15 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <filesystem>
 #include <type_traits>
 
 #include "Project/Project.hpp"
+#include "IniStorage.hpp"
 #include "Output/Output.hpp"
 #include "Service.hpp"
 #include "Shipper/ProjectDTO.hpp"
+#include "nlohmann/json.hpp"
 
 namespace fs = std::filesystem;
 
@@ -18,12 +21,12 @@ Project::Project() {
 * Runs on every start.
 * Called from main.cpp
 */
-void Project::check_if_in_project() {
+bool Project::check_if_in_project() {
     if (fs::exists(".saver/proj.ini")) {
         this->root_dir = ".";
-        return;
+        return true;
     }
-    return;
+    return false;
 }
 
 int Project::create_new_project(
@@ -46,10 +49,9 @@ int Project::create_new_project(
     );
 
     if (!userInfo.success ||  (!std::is_integral_v<decltype(userInfo.userId)>)) {
-        Output::print("Could not retrive correct user, try disconnecting and the connecting again.");
+        Output::error("Could not retrive correct user");
         return 1;
     }
-
 
     if (!fs::exists(proj_path)) {
         Output::error("Project path is invalid");
@@ -70,38 +72,47 @@ int Project::create_new_project(
         Output::print("Creating project");
     }
     
-    name = this->create_project_name(proj_path, userInfo.username);
-
     // call init_project
+    name = this->create_project_name(proj_path);
 
-    nlohmann::json body;
-
-    CreateProject::Response result = Service::instance().send()
-        .post<CreateProject::Response>(
-            "/proj/" + userInfo.username + "/" + name,
-            body,
+    CreateProject::Response project_result = Service::instance().send()
+        .get<CreateProject::Response>(
+            "proj/init/" + userInfo.username + "/" + name,
             true
     );
-    
 
-    if (!result.success) {
+    if (!project_result.success) {
         Output::print("Could not create project.");
-        Output::print("reason: " + result.message);
+        Output::print("reason: " + project_result.message);
         return 1;
     }
 
     Output::print("Succesfully created " + name);
+    
+    this->create_saver_files(proj_path, name);
     return 0;
 }
 
-const std::string Project::create_project_name(const std::string& proj_path, const std::string& username) {
+void Project::create_saver_files(
+    const fs::path& proj_root,
+    const std::string& name
+) {
+    IniStorage storage(proj_root / ".saver/proj.ini");
+    storage.createStorage();
+    storage.updateStorage("project_name", name);
+    storage.saveStorage();
+}
+
+const std::string Project::create_project_name(const std::string& proj_path) {
     std::string name;
-    Output::print("Name of project (" + proj_path + "):");
-    std::cin >> name;
+    fs::path folderName(proj_path);
 
-    // Do tests here to ensure its a viable name.
+    std::cout << "Name of project (" << folderName.filename().string() << "): ";
+    std::getline(std::cin, name);
 
-    // Contact remote to check if user has same name.
+    if (name.empty()) {
+        return folderName.filename().string();
+    }
 
     return name;
 }
@@ -125,7 +136,7 @@ int Project::add_files_in_project(const std::string& path) {
         }
     }
 
-    Output::print("DEBUG: file added");
+    // Output::print("DEBUG: file added");
     return 0;
 }
 

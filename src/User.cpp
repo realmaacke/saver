@@ -35,7 +35,6 @@ int User::connectUser(const std::string& username, const std::string& password) 
         return 0;
     }
 
-
     ConnectUser::Request body {username, password};
 
     ConnectUser::Response res = Service::instance().send()
@@ -44,7 +43,6 @@ int User::connectUser(const std::string& username, const std::string& password) 
             body,
             false
     );
-
     
     if (res.success && res.token.is_string()) {
         Service::instance().send().setToken(res.token);

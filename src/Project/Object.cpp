@@ -16,7 +16,6 @@ namespace fs = std::filesystem;
 
 void Object::create_obj_directory(const fs::path& root_dir) {
     if (root_dir.empty()) {
-        Output::error("Root dir is not set.");
         return;
     }
 
@@ -66,7 +65,6 @@ std::string Object::sha256(const std::string& data) {
 
 std::optional<fs::path> Object::object_path(const std::string& hash) {
     fs::path obj_path = fs::path(this->obj_dir) / hash.substr(0, 2) / hash.substr(2);
-
     if (fs::exists(obj_path)) {
         Output::print("Identical file already exists");
         return std::nullopt;
@@ -82,15 +80,15 @@ void Object::store_object(const std::string& hash, const std::string& content) {
         return;
     }
 
+
     // Create directories if not exists.
-    fs::create_directories(obj_path->parent_path());
+    // fs::create_directories(obj_path->parent_path());
 
-    if (fs::exists(obj_path->generic_string())) {
-        return;
-    }
+    // if (fs::exists(obj_path->generic_string())) {
+    //     return;
+    // }
 
-
-    // TODO: Implement the zlib compression
-    std::ofstream outStream(obj_path.value(), std::ios::binary);
-    outStream << content;
+    // // TODO: Implement the zlib compression
+    // std::ofstream outStream(obj_path.value(), std::ios::binary);
+    // outStream << content;
 }

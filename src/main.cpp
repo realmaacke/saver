@@ -3,7 +3,9 @@
 #include "Service.hpp"
 
 /**
-* Fill this out.
+* Main function
+* Important Service calls before user executes command.
+* Core saver_core is the class holding the commands.
 * */
 int main(int argc, char** argv) { 
     Core saver_core;
@@ -23,7 +25,6 @@ int main(int argc, char** argv) {
 
     // checks if user already stands in a project.
     Service::instance().proj().check_if_in_project();
-
 
     if (argc < 2) {
         std::cout << "Saver: unknown command" << std::endl;

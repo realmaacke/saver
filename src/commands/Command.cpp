@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "Command.hpp"
+#include "IniStorage.hpp"
 #include "Service.hpp"
 #include "Output/Output.hpp"
 
@@ -157,7 +158,11 @@ cmd Command::download(){
     };
 };
 
-
+/*
+* Method that connects the user.
+* Improve the UX by doing "forms" instead of typing username + password on same row
+*
+*/
 cmd Command::login() {
     return [](int argc, char** argv) {
         if (argc < 3) {
@@ -169,8 +174,26 @@ cmd Command::login() {
     };
 };
 
+/*
+* Method that disconnects user.
+* Bassicly just removes token from the config file.
+*/
 cmd Command::disconnect() {
     return [](int, char**) {
         return Service::instance().user().disconnectUser();
+    };
+}
+
+
+cmd Command::sandbox() {
+    return [](int, char**) {
+        IniStorage storage("./sandbox/test.ini");
+
+        storage.loadStorage();
+
+        storage.updateStorage("dfg", "321");
+        storage.saveStorage();
+
+        return 0;
     };
 }

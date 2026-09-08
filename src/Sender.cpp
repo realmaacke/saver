@@ -24,6 +24,7 @@ void Sender::setBaseUrl() {
     // Removes " from str, which  may come from .ini file.
     std::erase(url, '"');
 
+    // Removes trailing slash from url.
     if (url.ends_with("/")) {
         url = url.substr(0, url.size() - 1);
     }
@@ -43,8 +44,6 @@ std::string Sender::request(
         }
 
         std::string url = this->baseUrl + path;
-
-        Output::debug("url", url);
 
         std::string response;
         struct curl_slist* headers = nullptr;
