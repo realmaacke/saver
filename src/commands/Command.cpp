@@ -76,9 +76,13 @@ cmd Command::start() {
 */
 cmd Command::add(){
     return [](int argc, char** argv) {
-
         if (argc > 1) {
-            return Service::instance().proj().add_files_in_project(argv[1]);
+
+            if (Service::instance().proj().check_if_in_project()) {
+                return Service::instance().proj().add_files_in_project(argv[1]);
+            }
+            Output::print("You need to start a project");
+            return 1;
         }
         Output::error("You need to specify a path.");
         return 1;
@@ -158,7 +162,7 @@ cmd Command::login() {
     return [](int argc, char** argv) {
         if (argc < 3) {
             Output::print("Invalid use of command");
-            Output::print("Syntax: login <username> <password>");
+            Output::print("Syntax: connect <username> <password>");
             return 0;
         }
         return Service::instance().user().connectUser(argv[1], argv[2]);
