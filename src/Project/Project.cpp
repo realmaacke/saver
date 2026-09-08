@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -7,15 +6,21 @@
 #include "Project/Project.hpp"
 #include "IniStorage.hpp"
 #include "Output/Output.hpp"
+#include "Project/Cache.hpp"
+#include "Project/Object.hpp"
 #include "Service.hpp"
 #include "Shipper/ProjectDTO.hpp"
-#include "nlohmann/json.hpp"
 
 namespace fs = std::filesystem;
 
-Project::Project() {
-    this->object_.create_obj_directory(this->root_dir); 
+Project::Project()
+{
+    this->object = std::make_unique<Object>();
+    this->object->create_obj_directory(this->root_dir);
+
+    this->cache = std::make_unique<Cache>(this->object.get());
 }
+
 
 /*
 * Runs on every start.
@@ -101,6 +106,8 @@ void Project::create_saver_files(
     storage.createStorage();
     storage.updateStorage("project_name", name);
     storage.saveStorage();
+
+    this->object->create_obj_directory(proj_root);
 }
 
 const std::string Project::create_project_name(const std::string& proj_path) {
@@ -117,6 +124,16 @@ const std::string Project::create_project_name(const std::string& proj_path) {
     return name;
 }
 
+int Project::prepare_to_add_files(const std::string& path) {
+    if (this->root_dir.empty()) {
+        Output::error("Root dir is empty");
+        return 1;
+    }
+
+    this->object->set_obj_dir(this->root_dir + "/.saver/objects/");
+    return this->add_files_in_project(path);
+}
+
 int Project::add_files_in_project(const std::string& path) {
     if (!fs::exists(path)) {
         Output::error("Invalid path to file");
@@ -124,7 +141,7 @@ int Project::add_files_in_project(const std::string& path) {
     }
 
     if (!fs::is_directory(path) && fs::is_regular_file(path)) {
-        this->cache_.add_to_cache(path);
+        this->cache->add_to_cache(path);
     }
 
     if (fs::is_directory(path)) {
@@ -132,11 +149,9 @@ int Project::add_files_in_project(const std::string& path) {
             if (fs::is_directory(entry)) {
                 this->add_files_in_project(entry.path());
             }
-            this->cache_.add_to_cache(entry.path());
+            this->cache->add_to_cache(entry.path());
         }
     }
-
-    // Output::print("DEBUG: file added");
     return 0;
 }
 

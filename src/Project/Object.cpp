@@ -10,18 +10,15 @@
 #include <iomanip>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace fs = std::filesystem;
 
 void Object::create_obj_directory(const fs::path& root_dir) {
-    if (root_dir.empty()) {
-        return;
-    }
+    this->obj_dir = fs::path(root_dir / ".saver/objects/");
 
-    this->obj_dir = fs::path(root_dir / "/objects/");
-
-    if (!fs::exists(this->obj_dir)) {
+    if (!fs::exists(this->obj_dir.parent_path())) {
         fs::create_directories(this->obj_dir);
     }
 };
@@ -69,8 +66,11 @@ std::optional<fs::path> Object::object_path(const std::string& hash) {
         Output::print("Identical file already exists");
         return std::nullopt;
     }
-
     return obj_path;
+}
+
+void Object::set_obj_dir(const std::string& path) {
+    this->obj_dir = path;
 }
 
 void Object::store_object(const std::string& hash, const std::string& content) {
@@ -79,16 +79,16 @@ void Object::store_object(const std::string& hash, const std::string& content) {
     if (!obj_path.has_value()) {
         return;
     }
+    fs::create_directories(obj_path->parent_path());
 
+    std::ofstream outStream(*obj_path, std::ios::trunc);
 
-    // Create directories if not exists.
-    // fs::create_directories(obj_path->parent_path());
+    if (!outStream.is_open()) {
+        Output::print("Failed to create object");
+        return;
+    }
 
-    // if (fs::exists(obj_path->generic_string())) {
-    //     return;
-    // }
+    outStream << content;
 
     // // TODO: Implement the zlib compression
-    // std::ofstream outStream(obj_path.value(), std::ios::binary);
-    // outStream << content;
 }

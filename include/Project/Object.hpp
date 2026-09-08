@@ -8,6 +8,8 @@ class Object {
     public:
     // Create directory.
     void create_obj_directory(const fs::path& root_path);
+
+    void set_obj_dir(const std::string& path);
     
     // hash the file.
     std::string sha256(const std::string& data);
@@ -19,5 +21,5 @@ class Object {
     // Append files to the object/
     // return files from object/
 private:
-    std::string obj_dir = "";
+    fs::path obj_dir;
 };

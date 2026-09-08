@@ -80,7 +80,7 @@ cmd Command::add(){
         if (argc > 1) {
 
             if (Service::instance().proj().check_if_in_project()) {
-                return Service::instance().proj().add_files_in_project(argv[1]);
+                return Service::instance().proj().prepare_to_add_files(argv[1]);
             }
             Output::print("You need to start a project");
             return 1;

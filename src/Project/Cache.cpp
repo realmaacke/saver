@@ -1,4 +1,9 @@
 #include "Project/Cache.hpp"
+#include "Project/Object.hpp"
+
+Cache::Cache(Object* object) {
+    this->object = object;
+}
 
 std::optional<CacheType> Cache::get_from_cache(const std::string& path) {
     for (const CacheType& entry : this->cache_store) {
@@ -14,10 +19,12 @@ void Cache::add_to_cache(const std::string& path) {
         return;
     }
 
-    std::string bytes = this->object_.transform_file(path);
-    std::string hash = this->object_.sha256(bytes);
+
+    std::string bytes = this->object->transform_file(path);
+    std::string hash = this->object->sha256(bytes);
+
     // creates a file in /objects/hash    
-    this->object_.store_object(hash, bytes);
+    this->object->store_object(hash, bytes);
     
     // Store the info
     CacheType cacheType;

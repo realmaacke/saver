@@ -1,8 +1,9 @@
 #pragma once
-#include "Project/Object.hpp"
 #include <optional>
 #include <string>
 #include <vector>
+
+class Object;
 
 struct CacheType {
     std::string path;
@@ -11,10 +12,11 @@ struct CacheType {
 
 class Cache{
 public:
+    Cache(Object* object);
     std::optional<CacheType> get_from_cache(const std::string& path);
     void add_to_cache(const std::string& path);
 
 private:
     std::vector<CacheType> cache_store;
-    Object object_;
+    Object* object;
 };

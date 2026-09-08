@@ -28,6 +28,7 @@ public:
         const std::string& proj_path
     );
 
+    int prepare_to_add_files(const std::string& file);
     int add_files_in_project(const std::string& file);
     int describe_cache(const std::string& message);
 
@@ -35,6 +36,6 @@ private:
     std::string root_dir = "";
 
     
-    Cache cache_;
-    Object object_;
+    std::unique_ptr<Object> object;
+    std::unique_ptr<Cache> cache;
 };
