@@ -83,6 +83,14 @@ void Object::update_index(
     const std::string& permissions,
     const std::string& hash
 ) {
+    std::vector<IndexNode> staged = this->get_index();
+
+    for (const IndexNode& node : staged) {
+        if (node.path == path && node.permissions == permissions && node.hash == hash) {
+            return;
+        }
+    }
+
     std::ofstream index(this->index_path, std::ios_base::app |std::ios_base::out);
     index << permissions + " " + path.generic_string() + " " + hash + "\n";
 }

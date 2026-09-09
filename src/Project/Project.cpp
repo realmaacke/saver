@@ -22,6 +22,8 @@ Project::Project()
 
     this->cache = std::make_unique<Cache>(this->object.get());
     this->tree = std::make_unique<Tree>(this->root_dir, this->object.get());
+    this->commit = std::make_unique<Commit>(this->object.get());
+    this->refs = std::make_unique<Refs>(this->root_dir);
 }
 
 
@@ -170,11 +172,13 @@ int Project::describe_cache(const std::string& message) {
     }
     this->object->set_paths(this->root_dir);
 
-    std::string content = this->tree->describe_tree(message);
+    std::string tree_hash = this->tree->describe_tree(message);
+    std::string parent_hash = this->refs->get_current_commit();
+    std::string commit_hash = this->commit->create_commit_object(tree_hash, parent_hash, message, "");
 
-    // take all the blobs and stuff and create a tree.
-    // here we will have to manage refs.
-    // 
+    this->refs->update_current_commit(commit_hash);
+
+    this->object->reset_index();
 
     return 0;
 }
