@@ -19,12 +19,14 @@ void Cache::add_to_cache(const std::string& path) {
         return;
     }
 
-
     std::string bytes = this->object->transform_file(path);
     std::string hash = this->object->sha256(bytes);
+    std::string mode = this->object->get_permissions(path);
 
-    // creates a file in /objects/hash    
+    // creates a file in /objects/hash
     this->object->store_object(hash, bytes);
+    // Add to index
+    this->object->update_index(path, mode, hash);
     
     // Store the info
     CacheType cacheType;

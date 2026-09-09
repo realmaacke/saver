@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <string>
 #include <filesystem>
 #include <type_traits>
@@ -8,6 +9,7 @@
 #include "Output/Output.hpp"
 #include "Project/Cache.hpp"
 #include "Project/Object.hpp"
+#include "Project/Tree.hpp"
 #include "Service.hpp"
 #include "Shipper/ProjectDTO.hpp"
 
@@ -19,6 +21,7 @@ Project::Project()
     this->object->create_obj_directory(this->root_dir);
 
     this->cache = std::make_unique<Cache>(this->object.get());
+    this->tree = std::make_unique<Tree>(this->root_dir, this->object.get());
 }
 
 
@@ -107,6 +110,9 @@ void Project::create_saver_files(
     storage.updateStorage("project_name", name);
     storage.saveStorage();
 
+    // Creates index file here.
+    
+    this->object->create_index_file(proj_root);
     this->object->create_obj_directory(proj_root);
 }
 
@@ -130,8 +136,10 @@ int Project::prepare_to_add_files(const std::string& path) {
         return 1;
     }
 
-    this->object->set_obj_dir(this->root_dir + "/.saver/objects/");
+    this->object->set_paths(this->root_dir);
     return this->add_files_in_project(path);
+
+    // what to do with the cache now?:
 }
 
 int Project::add_files_in_project(const std::string& path) {
@@ -160,6 +168,9 @@ int Project::describe_cache(const std::string& message) {
         Output::print("The describe cant be empty");
         return 0;
     }
+    this->object->set_paths(this->root_dir);
+
+    std::string content = this->tree->describe_tree(message);
 
     // take all the blobs and stuff and create a tree.
     // here we will have to manage refs.

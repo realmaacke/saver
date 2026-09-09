@@ -1,6 +1,8 @@
 #pragma once
 #include "Project/Cache.hpp"
 #include "Project/Object.hpp"
+#include "Project/Tree.hpp"
+#include <memory>
 #include <string>
 #include <filesystem>
 
@@ -38,4 +40,5 @@ private:
     
     std::unique_ptr<Object> object;
     std::unique_ptr<Cache> cache;
+    std::unique_ptr<Tree> tree;
 };
