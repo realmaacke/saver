@@ -72,3 +72,11 @@ void IniStorage::updateStorage(
 ) {
     this->values[key] = value;
 };
+
+std::string IniStorage::getValue(const std::string& key) {
+    if (!this->values.contains(key)) {
+        Output::error("getValue(), key does not exist");
+        return "";
+    }
+    return this->values[key];
+}

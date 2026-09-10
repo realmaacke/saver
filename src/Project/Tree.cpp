@@ -2,7 +2,9 @@
 #include "Output/Output.hpp"
 #include "Project/Object.hpp"
 #include <filesystem>
+#include <fstream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -79,4 +81,62 @@ TreeStructure Tree::build_tree(const std::vector<IndexNode> nodes) {
 std::string Tree::describe_tree(const std::string& msg) {
     TreeStructure tree = this->build_tree(this->object->get_index());
     return tree.hash;
+}
+
+
+TreeStructure Tree::unfold_tree(const std::string& hash) {
+    TreeStructure base_tree;
+    base_tree.hash = hash;
+
+    fs::path object_path = 
+    this->object->retrive_obj_dir() / hash.substr(0, 2) / hash.substr(2);
+    std::ifstream obj_file(object_path, std::ios::in | std::ios::binary);
+
+    if (!obj_file.is_open()) {
+        Output::error("unfold_tree(), could not open file");
+        return base_tree;
+    }
+
+    std::ostringstream buffer;
+    buffer << obj_file.rdbuf();
+    std::string raw = buffer.str();
+
+    size_t null_pos = raw.find('\0');
+    if (null_pos == std::string::npos) {
+        Output::error("unfold_tree(), malformed tree: no header separator");
+        return base_tree;
+    }
+
+    std::istringstream ss(raw.substr(null_pos +1));
+    std::string line;
+
+    while(std::getline(ss, line)) {
+        if (line.empty()) continue;
+
+        std::istringstream entry_ss(line);
+        TreeNode node;
+
+        entry_ss >> node.permissions >> node.file >> node.hash;
+
+        if (node.permissions.empty() || node.hash.empty()) {
+            continue;
+        }
+
+        if (node.permissions == "040000") {
+            node.blob = this->object->retrive_blob(node.hash);
+            base_tree.entries.push_back(node);
+
+            TreeStructure sub_tree = this->unfold_tree(node.hash);
+
+            for (TreeNode sub_node : sub_tree.entries) {
+                sub_node.file = node.file + "/" + sub_node.file;
+                base_tree.entries.push_back(sub_node);
+            }
+            continue;
+        }
+        node.blob = this->object->retrive_blob(node.hash);
+        base_tree.entries.push_back(node);
+    }
+
+    return base_tree;
 }

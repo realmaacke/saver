@@ -1,5 +1,7 @@
 #include "Project/Object.hpp"
 #include "Output/Output.hpp"
+#include "Project/Tree.hpp"
+#include "Shipper/ProjectDTO.hpp"
 #include "openssl/evp.h"
 #include "openssl/types.h"
 #include <cstddef>
@@ -27,6 +29,14 @@ void Object::create_obj_directory(const fs::path& root_dir) {
 void Object::create_index_file(const fs::path& root_dir) {
     std::ofstream out(root_dir / ".saver/index");
     out << "" << std::endl;
+}
+
+fs::path Object::retrive_obj_dir() {
+    if (this->obj_dir.empty()) {
+        Output::error("Object path is empty");
+        return "";
+    }
+    return this->obj_dir;
 }
 
 std::string Object::transform_file(const fs::path& path) {
@@ -64,6 +74,24 @@ std::string Object::sha256(const std::string& data) {
     }
 
     return stream.str();
+}
+
+std::string Object::base64_encode(const std::string& data) {
+    if (data.empty()) {
+        return "";
+    }
+
+    // Worst-case output size for base64: 4 * ceil(n/3) + null terminator
+    size_t max_len = 4 * ((data.size() + 2) / 3) + 1;
+    std::vector<unsigned char> out(max_len);
+
+    int written = EVP_EncodeBlock(
+        out.data(),
+        reinterpret_cast<const unsigned char*>(data.data()),
+        static_cast<int>(data.size())
+    );
+
+    return std::string(reinterpret_cast<char*>(out.data()), written);
 }
 
 std::string Object::get_permissions(const fs::path& path) {
@@ -123,6 +151,26 @@ void Object::reset_index() {
     index.close();
 }
 
+std::string Object::get_object_type(const fs::path& path) {
+    if (!fs::exists(path)) {
+        Output::error("get_object_type(), unknown path");
+        return "";
+    }
+
+    std::ifstream obj_file(path, std::ios::in);
+    std::string first_line;
+    std::getline(obj_file, first_line);
+
+    size_t space_separator;
+    space_separator = first_line.find_first_of(' ');
+
+    if (space_separator != std::string::npos) {
+        return first_line.substr(0, space_separator);
+    } else {
+        Output::error("get_object_type(), could not find space separator");
+        return "";
+    }
+}
 
 std::optional<fs::path> Object::object_path(const std::string& hash) {
     fs::path obj_path = fs::path(this->obj_dir) / hash.substr(0, 2) / hash.substr(2);
@@ -158,4 +206,38 @@ void Object::store_object(const std::string& hash, const std::string& content) {
     outStream << content;
 
     // // TODO: Implement the zlib compression
+}
+
+std::string Object::retrive_blob(const std::string& hash) {
+    fs::path obj_path = fs::path(this->obj_dir / hash.substr(0, 2) / hash.substr(2));
+    std::string line;
+
+    std::ifstream obj_file(obj_path, std::ios::in | std::ios::binary);
+
+    if (!obj_file.is_open()) {
+        Output::error("blob_to_bytes(), could not open file");
+        return "";
+    }
+    std::ostringstream buffer;
+    buffer << obj_file.rdbuf();
+    return buffer.str();
+}
+
+ObjectDTO Object::obj_to_dto(TreeNode& node) {
+    ObjectDTO dto;
+    dto.hash = node.hash;
+    dto.mode = node.permissions;
+    if (node.blob) {
+        dto.content = this->base64_encode(*node.blob);
+    }
+    return dto;
+}
+
+std::vector<ObjectDTO> Object::array_obj_to_dto(std::vector<TreeNode>& nodes) {
+    std::vector<ObjectDTO> ObjectDTO_array;
+
+    for(TreeNode& node : nodes) {
+        ObjectDTO_array.emplace_back(this->obj_to_dto(node));
+    }
+    return ObjectDTO_array;
 }

@@ -14,6 +14,7 @@ public:
     void loadStorage();
     void saveStorage();
     void updateStorage(const std::string& key, const std::string& value);
+    std::string getValue(const std::string& key);
 
 private:
     fs::path filePath = "";

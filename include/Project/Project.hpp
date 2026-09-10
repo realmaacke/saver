@@ -35,6 +35,7 @@ public:
     int prepare_to_add_files(const std::string& file);
     int add_files_in_project(const std::string& file);
     int describe_cache(const std::string& message);
+    int upload_commit(); 
 
 private:
     std::string root_dir = "";
