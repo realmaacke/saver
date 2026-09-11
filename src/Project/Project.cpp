@@ -201,9 +201,15 @@ int Project::upload_commit() {
     }
 
     const std::string current_commit = this->refs->get_current_commit();
+    const std::string current_chapter = this->refs->get_current_chapter();
 
     if (current_commit.empty()) {
         Output::error("You need to describe your changes in order to upload.");
+        return 1;
+    }
+
+    if (current_chapter.empty()) {
+        Output::error("Could not determine current chapter");
         return 1;
     }
 
@@ -226,7 +232,7 @@ int Project::upload_commit() {
     );
     object_dto_array.push_back(commit_dto);
 
-    CommitToProject::Request body {current_commit, object_dto_array};
+    CommitToProject::Request body {current_commit,current_chapter, object_dto_array};
 
     CommitToProject::Response res = Service::instance().send()
         .post<CommitToProject::Response, CommitToProject::Request>(

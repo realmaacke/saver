@@ -43,11 +43,13 @@ struct ObjectDTO {
 struct CommitToProject {
     struct Request {
         std::string commit_hash;
+        std::string chapter;
         std::vector<ObjectDTO> blobs;
 
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(
             Request,
             commit_hash,
+            chapter,
             blobs
         )
     };
