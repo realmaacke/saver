@@ -1,4 +1,5 @@
 #pragma once
+#include "curl/system.h"
 #include <string>
 #include <vector>
 class Output {
@@ -8,4 +9,6 @@ public:
     static void error(const std::string& msg);
     static void print(const std::string& msg);
     static void multiple_errors(std::vector<std::string>& messages);
+
+    static void print_progress_bar(curl_off_t sent, curl_off_t total);
 };

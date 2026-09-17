@@ -1,6 +1,8 @@
 #pragma once
 #include "Output/Output.hpp"
+#include "curl/system.h"
 #include <curl/curl.h>
+#include <functional>
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -16,13 +18,29 @@ public:
     }
 
     template<typename ResponseDTO, typename RequestDTO>
-    ResponseDTO post(const std::string& path, const RequestDTO body, bool useAuth) {
+    ResponseDTO post(
+        const std::string& path,
+        const RequestDTO body,
+        bool useAuth,
+        std::function<void(curl_off_t, curl_off_t)> progress = nullptr
+    ) {
         nlohmann::json j = body;
-        std::string raw = this->request("POST", path, j.dump(), useAuth);
+        std::string raw = this->request("POST", path, j.dump(), useAuth, progress);
         return parse_response<ResponseDTO>(raw);
     }
 
 private:
+    // for loading bar
+    struct ProgressContext {
+        std::function<void(curl_off_t, curl_off_t)> callback;
+    };
+
+    static int progressCallback(
+        void* clientp,
+        curl_off_t downloadTotal, curl_off_t downloadNow,
+        curl_off_t uploadTotal, curl_off_t uploadNow
+    );
+
     template<typename ResponseDTO>
     ResponseDTO parse_response(const std::string& raw) {
         try {
@@ -46,6 +64,7 @@ private:
     std::string request(const std::string& method,
         const std::string& path,
         const std::string& body,
-        bool useAuth
+        bool useAuth,
+        std::function<void(curl_off_t, curl_off_t)> progress = nullptr
     );
 };

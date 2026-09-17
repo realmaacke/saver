@@ -1,5 +1,6 @@
 #include "Shipper/Sender.hpp"
 #include "Service.hpp"
+#include "curl/system.h"
 #include <iostream>
 #include <string>
 #include <nlohmann/json.hpp>
@@ -32,11 +33,24 @@ void Sender::setBaseUrl() {
     this->baseUrl = url + ":" + port + "/";
 }
 
+int Sender::progressCallback(
+    void* clientp,
+    curl_off_t downloadTotal, curl_off_t downloadNow,
+    curl_off_t uploadTotal, curl_off_t uploadNow
+) {
+    ProgressContext* ctx = static_cast<ProgressContext*>(clientp);
+    if (ctx->callback) {
+        ctx->callback(uploadNow, uploadTotal);
+    }
+    return 0;
+}
+
 std::string Sender::request(
     const std::string& method,
     const std::string& path,
     const std::string& body,
-    bool useAuth
+    bool useAuth,
+    std::function<void(curl_off_t, curl_off_t)> progress
 ) {
         CURL* curl = curl_easy_init();
         if (!curl) {
@@ -62,6 +76,13 @@ std::string Sender::request(
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
         }
 
+        ProgressContext ctx{progress};
+        if (progress) {
+            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+            curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progressCallback);
+            curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &ctx);
+        }
+
         CURLcode res = curl_easy_perform(curl);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
@@ -71,7 +92,6 @@ std::string Sender::request(
         }
 
         return response;
-
 }
 
 

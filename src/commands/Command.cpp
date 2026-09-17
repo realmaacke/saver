@@ -11,7 +11,8 @@
 using cmd = std::function<int(int, char **)>;
 
 /**
-*   Displays helpful information
+*  Displays helpful information
+* TODO: Load this from an external file.
 * */
 cmd Command::help() {
     return [](int, char**) {
@@ -35,7 +36,7 @@ cmd Command::help() {
 }
 
 /**
-*
+* 
 */
 cmd Command::project() {
     return [](int, char**) {
@@ -44,7 +45,8 @@ cmd Command::project() {
 };
 
 /**
-*
+* Method that starts a new project.
+* Checks if path is valid else use cdw.
 */
 cmd Command::start() {
     return [](int argc, char** argv) {
@@ -73,7 +75,7 @@ cmd Command::start() {
 }
 
 /**
-* Method that adds files to cache.
+* Method that adds files to the staging environment.
 */
 cmd Command::add(){
     return [](int argc, char** argv) {
@@ -100,8 +102,6 @@ cmd Command::remove(){
             Output::print("Syntax: saver remove path/to/file");
             return 1;
         }
-        std::string describe_message = argv[1];
-        // Service::instance().proj().describe_cache(describe_message);
         return 0;
     };
 };

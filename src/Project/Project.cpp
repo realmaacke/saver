@@ -238,9 +238,17 @@ int Project::upload_commit() {
         .post<CommitToProject::Response, CommitToProject::Request>(
             "proj/upload/" + userInfo.username + "/" + project_name,
             body,
-            true
+            true,
+            [](curl_off_t now, curl_off_t total) {
+                Output::print_progress_bar(now, total);
+            }
     );
 
-    Output::print(res.message);
+    if (!res.success) {
+        Output::error("could not upload to remote, reason: " + res.message);
+        return 1;
+    }
+
+
     return 0;
 }
