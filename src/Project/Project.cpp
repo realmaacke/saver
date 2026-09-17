@@ -6,6 +6,7 @@
 
 #include "Project/Project.hpp"
 #include "IniStorage.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "Project/Cache.hpp"
 #include "Project/Commit.hpp"
@@ -20,13 +21,17 @@ namespace fs = std::filesystem;
 Project::Project()
 {
     this->object = std::make_unique<Object>();
-    this->object->create_obj_directory(this->root_dir);
-    this->object->set_paths(this->root_dir);
-
     this->cache = std::make_unique<Cache>(this->object.get());
-    this->tree = std::make_unique<Tree>(this->root_dir, this->object.get());
     this->commit = std::make_unique<Commit>(this->object.get());
-    this->refs = std::make_unique<Refs>(this->root_dir);
+
+
+    if (this->check_if_in_project()) {
+        this->object->create_obj_directory(this->root_dir);
+        this->object->set_paths(this->root_dir);
+        this->tree = std::make_unique<Tree>(this->root_dir, this->object.get());
+        this->refs = std::make_unique<Refs>(this->root_dir);
+    }
+
 }
 
 
@@ -47,11 +52,16 @@ int Project::create_new_project(
     const std::string& optional_flag) {
     
     std::string name;
+
+    if (fs::exists(fs::path(proj_path) / ".saver")) {
+        Output::warning(ErrorType::ALREADY_IN_PROJECT);
+        return 1;
+    }
     
     // if not signed in, then return;
     if (!Service::instance().user().alreadyConnectedUser()) {
-        Output::error("You must be logged in to create a project");
-        Output::print("Use: saver login <username> <password> | to login");
+        Output::warning(ErrorType::AUTH_REQUIRED);
+        Output::print("Syntax: saver login <username> <password>");
         return 1;
     }
 
@@ -62,19 +72,18 @@ int Project::create_new_project(
     );
 
     if (!userInfo.success ||  (!std::is_integral_v<decltype(userInfo.userId)>)) {
-        Output::error("Could not retrive correct user");
+        Output::warning(ErrorType::USER_RETRIVAL);
         return 1;
     }
 
     if (!fs::exists(proj_path)) {
-        Output::error("Project path is invalid");
+        Output::warning(ErrorType::INVALID_PATH);
         return 1;
     }
-
     bool optional = (!optional_flag.empty() && optional_flag == "-f");
 
     if (!fs::is_empty(proj_path) && !optional) {
-        Output::print("Directory is not empty.");
+        Output::warning(ErrorType::DIRECTORY_NOT_EMPTY);
         Output::print("To force create an directory, add -f flag");
         return 1;
     }
@@ -95,7 +104,7 @@ int Project::create_new_project(
     );
 
     if (!project_result.success) {
-        Output::print("Could not create project.");
+        Output::warning(ErrorType::COULD_NOT_CREATE_PROJ);
         Output::print("reason: " + project_result.message);
         return 1;
     }
@@ -136,7 +145,7 @@ const std::string Project::create_project_name(const std::string& proj_path) {
 
 int Project::prepare_to_add_files(const std::string& path) {
     if (this->root_dir.empty()) {
-        Output::error("project is empty", __FUNCTION__);
+        Output::warning(ErrorType::EMPTY_PROJECT);
         return 1;
     }
     return this->add_files_in_project(path);
@@ -145,7 +154,6 @@ int Project::prepare_to_add_files(const std::string& path) {
 
 int Project::add_files_in_project(const std::string& path) {
     if (!fs::exists(path)) {
-        Output::error("Invalid path to file", __FUNCTION__);
         return 1;
     }
 
@@ -184,8 +192,8 @@ int Project::describe_cache(const std::string& message) {
 int Project::upload_commit() {
     // if not signed in, then return;
     if (!Service::instance().user().alreadyConnectedUser()) {
-        Output::error("You must be logged to upload to a project");
-        Output::print("Use: saver login <username> <password> | to login");
+        Output::warning(ErrorType::AUTH_REQUIRED);
+        Output::print("Syntax: saver login <username> <password>");
         return 1;
     }
 
@@ -196,7 +204,7 @@ int Project::upload_commit() {
     );
 
     if (!userInfo.success ||  (!std::is_integral_v<decltype(userInfo.userId)>)) {
-        Output::error("Could not retrive correct user");
+        Output::warning(ErrorType::USER_RETRIVAL);
         return 1;
     }
 
@@ -204,12 +212,12 @@ int Project::upload_commit() {
     const std::string current_chapter = this->refs->get_current_chapter();
 
     if (current_commit.empty()) {
-        Output::error("You need to describe your changes in order to upload.");
+        Output::warning(ErrorType::NO_DESCRIBE);
         return 1;
     }
 
     if (current_chapter.empty()) {
-        Output::error("Could not determine current chapter");
+        Output::warning(ErrorType::DETERMINE_CHAPTER);
         return 1;
     }
 
@@ -245,7 +253,7 @@ int Project::upload_commit() {
     );
 
     if (!res.success) {
-        Output::error("could not upload to remote, reason: " + res.message);
+        Output::warning(ErrorType::BAD_UPLOAD);
         return 1;
     }
 

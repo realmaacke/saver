@@ -1,4 +1,5 @@
 #include "Project/Object.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "Project/Tree.hpp"
 #include "Shipper/ProjectDTO.hpp"
@@ -33,7 +34,7 @@ void Object::create_index_file(const fs::path& root_dir) {
 
 fs::path Object::retrive_obj_dir() {
     if (this->obj_dir.empty()) {
-        Output::error("Object path is empty");
+        Output::error(ErrorType::INVALID_PATH, __FUNCTION__);
         return "";
     }
     return this->obj_dir;
@@ -41,7 +42,7 @@ fs::path Object::retrive_obj_dir() {
 
 std::string Object::transform_file(const fs::path& path) {
     if (!fs::exists(path)) {
-        Output::error("Cant read file, it does not exist", __FUNCTION__);
+        Output::error(ErrorType::INVALID_PATH, __FUNCTION__);
         return {};
     }
     
@@ -130,7 +131,7 @@ std::vector<IndexNode> Object::get_index() {
     std::string line;
 
     if (!index.is_open()) {
-        Output::error("Failed to open index file");
+        Output::error(ErrorType::FILE_CANT_OPEN, __FUNCTION__);
         return nodes;
     }
 
@@ -138,7 +139,6 @@ std::vector<IndexNode> Object::get_index() {
         std::istringstream iss(line);
         IndexNode node;
         
-
         iss >> node.permissions >> node.path >> node.hash;
         nodes.push_back(node);
     }
@@ -153,7 +153,7 @@ void Object::reset_index() {
 
 std::string Object::get_object_type(const fs::path& path) {
     if (!fs::exists(path)) {
-        Output::error("get_object_type(), unknown path");
+        Output::error(ErrorType::INVALID_PATH, __FUNCTION__);
         return "";
     }
 
@@ -167,7 +167,7 @@ std::string Object::get_object_type(const fs::path& path) {
     if (space_separator != std::string::npos) {
         return first_line.substr(0, space_separator);
     } else {
-        Output::error("get_object_type(), could not find space separator");
+        Output::error(ErrorType::SEPARATOR, __FUNCTION__);
         return "";
     }
 }
@@ -175,7 +175,6 @@ std::string Object::get_object_type(const fs::path& path) {
 std::optional<fs::path> Object::object_path(const std::string& hash) {
     fs::path obj_path = fs::path(this->obj_dir) / hash.substr(0, 2) / hash.substr(2);
     if (fs::exists(obj_path)) {
-        Output::print("Identical file already exists");
         return std::nullopt;
     }
     return obj_path;
@@ -199,7 +198,7 @@ void Object::store_object(const std::string& hash, const std::string& content) {
     std::ofstream outStream(*obj_path, std::ios::trunc);
 
     if (!outStream.is_open()) {
-        Output::error("Failed to create object", __FUNCTION__);
+        Output::error(ErrorType::FILE_CANT_BE_CREATED, __FUNCTION__);
         return;
     }
 
@@ -215,7 +214,7 @@ std::string Object::retrive_blob(const std::string& hash) {
     std::ifstream obj_file(obj_path, std::ios::in | std::ios::binary);
 
     if (!obj_file.is_open()) {
-        Output::error("blob_to_bytes(), could not open file");
+        Output::error(ErrorType::FILE_CANT_OPEN, __FUNCTION__);
         return "";
     }
     std::ostringstream buffer;

@@ -1,4 +1,5 @@
 #include "Project/Tree.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "Project/Object.hpp"
 #include <filesystem>
@@ -93,7 +94,7 @@ TreeStructure Tree::unfold_tree(const std::string& hash) {
     std::ifstream obj_file(object_path, std::ios::in | std::ios::binary);
 
     if (!obj_file.is_open()) {
-        Output::error("unfold_tree(), could not open file");
+        Output::error(ErrorType::FILE_CANT_OPEN, __FUNCTION__);
         return base_tree;
     }
 
@@ -103,7 +104,7 @@ TreeStructure Tree::unfold_tree(const std::string& hash) {
 
     size_t null_pos = raw.find('\0');
     if (null_pos == std::string::npos) {
-        Output::error("unfold_tree(), malformed tree: no header separator");
+        Output::error(ErrorType::SEPARATOR, __FUNCTION__);
         return base_tree;
     }
 

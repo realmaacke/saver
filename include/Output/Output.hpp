@@ -6,6 +6,7 @@
 class Output {
 public:
     static void error(const ErrorType& type, const std::string& function=__FUNCTION__);
+    static void warning(const ErrorType& type);
     static void print(const std::string& message);
 
     static void debug(const std::string& type, const std::string& msg);

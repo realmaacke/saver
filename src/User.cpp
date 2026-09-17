@@ -1,5 +1,6 @@
 #include "User.hpp"
 #include <string>
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "Service.hpp"
 #include "Shipper/UserDTO.hpp"
@@ -31,7 +32,7 @@ bool User::alreadyConnectedUser() {
 int User::connectUser(const std::string& username, const std::string& password) {
     if (this->alreadyConnectedUser()) {
         Output::print("User already logged in");
-        Output::print("If you want to login as another user, use: saver disconnect");
+        Output::print("use: saver disconnect - to disconnect the current user");
         return 0;
     }
 
@@ -50,8 +51,7 @@ int User::connectUser(const std::string& username, const std::string& password) 
         Output::print("Connection successful!");
         return 0;
     }
-    
-    Output::error(res.message);
+    Output::warning(ErrorType::COULD_NOT_AUTH);
     return 1;
 }
 

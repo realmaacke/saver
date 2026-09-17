@@ -1,4 +1,5 @@
 #include "Project/Commit.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "Project/Object.hpp"
 #include <cstddef>
@@ -44,14 +45,14 @@ CommitObject Commit::unfold_commit_object(const std::string& hash) {
     CommitObject commit_object;
 
     if (!fs::exists(object_path)) {
-        Output::error("unfold_commit_object(), path does not exist");
+        Output::error(ErrorType::INVALID_PATH, __FUNCTION__);
         return commit_object;
     }
 
     std::ifstream commit_file(object_path, std::ios::in);
 
     if (!commit_file.is_open()) {
-        Output::error("unfold_commit_object(), could not open file");
+        Output::error(ErrorType::FILE_CANT_OPEN, __FUNCTION__);
         return commit_object;
     }
 

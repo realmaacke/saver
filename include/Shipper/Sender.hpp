@@ -1,4 +1,5 @@
 #pragma once
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include "curl/system.h"
 #include <curl/curl.h>
@@ -46,7 +47,9 @@ private:
         try {
             return nlohmann::json::parse(raw).get<ResponseDTO>();
         } catch (const nlohmann::json::parse_error&) {
-            Output::error("Server returned a non-JSON response: " + raw.substr(0, 200));
+            Output::error(ErrorType::NON_JSON_REQUEST, __FUNCTION__);
+            // remove the line below once saver is stable enough.
+            Output::print(raw.substr(0, 200));
             throw;
         }
     }

@@ -4,6 +4,7 @@
 
 #include "Command.hpp"
 #include "IniStorage.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Service.hpp"
 #include "Output/Output.hpp"
 
@@ -67,7 +68,7 @@ cmd Command::start() {
         }
 
         if (!std::filesystem::is_directory(".")) {
-            Output::error("Not in a valid direcory.");
+            Output::warning(ErrorType::INVALID_DIRECTORY);
             return 1;
         }
         return Service::instance().proj().create_new_project(".");
@@ -87,7 +88,7 @@ cmd Command::add(){
             Output::print("You need to start a project");
             return 1;
         }
-        Output::error("You need to specify a path.");
+        Output::warning(ErrorType::NO_PATH_SPECIFIED);
         return 1;
     };
 };
@@ -98,7 +99,7 @@ cmd Command::add(){
 cmd Command::remove(){
     return [](int argc, char** argv) {
         if (argc < 2) {
-            Output::print("You need to specify path to remove");
+            Output::warning(ErrorType::NO_PATH_SPECIFIED);
             Output::print("Syntax: saver remove path/to/file");
             return 1;
         }
@@ -126,8 +127,8 @@ cmd Command::reset(){
 cmd Command::describe(){
     return [](int argc, char** argv) {
         if (argc < 2) {
-            Output::print("You need to describe the changes.");
-            Output::print("Syntax: saver \"describe here\"");
+            Output::warning(ErrorType::INVALID_USE_OF_COMMAND);
+            Output::print("Syntax: saver \"message\"");
             return 1;
         }
         std::string describe_message = argv[1];
@@ -166,7 +167,7 @@ cmd Command::download(){
 cmd Command::login() {
     return [](int argc, char** argv) {
         if (argc < 3) {
-            Output::print("Invalid use of command");
+            Output::warning(ErrorType::INVALID_USE_OF_COMMAND);
             Output::print("Syntax: connect <username> <password>");
             return 0;
         }

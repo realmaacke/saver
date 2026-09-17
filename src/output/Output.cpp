@@ -12,6 +12,10 @@ namespace Color {
     constexpr std::string_view Bold    = "\033[1m";
 }
 
+void Output::warning(const ErrorType &type) {
+    std::cout << error_to_string(type) << std::endl;
+}
+
 /*
 * Method that prints an error.
 * TODO: add color support.
@@ -20,7 +24,7 @@ void Output::error(const ErrorType& type, const std::string& function) {
     std::cout
         << "[" 
         << Color::Red
-            <<"Internal error"
+            <<"Error"
         << Color::Reset 
         << "]: "
         << Color::Red

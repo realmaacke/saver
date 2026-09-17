@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include "Storage.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include <filesystem>
 #include <fstream>
@@ -82,7 +83,7 @@ bool Storage::createConfigFile() {
         fs::copy_file(basePath, configPath);
         return true;
     } catch (const fs::filesystem_error& e) {
-        Output::error(e.what(), __FUNCTION__);
+        Output::error(ErrorType::FILE_CANT_BE_COPIED, __FUNCTION__);
         return false;
     }
 }

@@ -1,4 +1,5 @@
 #include "IniStorage.hpp"
+#include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
 #include <cstddef>
 #include <filesystem>
@@ -15,7 +16,6 @@ IniStorage::IniStorage(const fs::path& path) {
 };
 
 void IniStorage::createStorage() {
-    Output::debug("path", this->filePath);
     if (!fs::exists(this->filePath.parent_path())) {
         fs::create_directories(this->filePath.parent_path());
     }
@@ -26,7 +26,7 @@ void IniStorage::createStorage() {
 
 void IniStorage::loadStorage() {
     if (!fs::exists(this->filePath)) {
-        Output::error("IniStorage file has not been selected");
+        Output::error(ErrorType::NO_PATH_SPECIFIED, __FUNCTION__);
         return;
     }
 
@@ -75,7 +75,7 @@ void IniStorage::updateStorage(
 
 std::string IniStorage::getValue(const std::string& key) {
     if (!this->values.contains(key)) {
-        Output::error("getValue(), key does not exist");
+        Output::error(ErrorType::BAD_KEY, __FUNCTION__);
         return "";
     }
     return this->values[key];
