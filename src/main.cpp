@@ -9,7 +9,6 @@
 * */
 int main(int argc, char** argv) { 
     Core saver_core;
-
     // Service calls order is important to maintain.
 
     // Internal config

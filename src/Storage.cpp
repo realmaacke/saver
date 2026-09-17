@@ -135,6 +135,7 @@ bool Storage::createConfigFile() {
         fs::copy_file(basePath, configPath);
         return true;
     } catch (const fs::filesystem_error&) {
+        
         return false;
     }
 }
