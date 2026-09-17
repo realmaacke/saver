@@ -1,4 +1,5 @@
 #include "Output/Output.hpp"
+#include "Output/ErrorCode.hpp"
 #include <iostream>
 #include <string>
 
@@ -15,7 +16,7 @@ namespace Color {
 * Method that prints an error.
 * TODO: add color support.
 */
-void Output::error(const std::string &msg, const std::string& function) {
+void Output::error(const ErrorType& type, const std::string& function) {
     std::cout
         << "[" 
         << Color::Red
@@ -26,7 +27,7 @@ void Output::error(const std::string &msg, const std::string& function) {
         << "source"
         << function << "()"
         << " reason:"
-        << msg.c_str() << Color::Reset << std::endl;
+        << error_to_string(type) << Color::Reset << std::endl;
 }
 
 /*

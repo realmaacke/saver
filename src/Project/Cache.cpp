@@ -5,6 +5,9 @@ Cache::Cache(Object* object) {
     this->object = object;
 }
 
+/*
+* Prevents duplicated files to be added
+*/
 std::optional<CacheType> Cache::get_from_cache(const std::string& path) {
     for (const CacheType& entry : this->cache_store) {
         if (path == entry.path) {

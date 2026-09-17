@@ -41,7 +41,7 @@ fs::path Object::retrive_obj_dir() {
 
 std::string Object::transform_file(const fs::path& path) {
     if (!fs::exists(path)) {
-        Output::error("Cant read file, it does not exist");
+        Output::error("Cant read file, it does not exist", __FUNCTION__);
         return {};
     }
     
@@ -199,7 +199,7 @@ void Object::store_object(const std::string& hash, const std::string& content) {
     std::ofstream outStream(*obj_path, std::ios::trunc);
 
     if (!outStream.is_open()) {
-        Output::print("Failed to create object");
+        Output::error("Failed to create object", __FUNCTION__);
         return;
     }
 

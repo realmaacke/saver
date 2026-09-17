@@ -1,14 +1,18 @@
 #pragma once
+#include "Output/ErrorCode.hpp"
 #include "curl/system.h"
 #include <string>
 #include <vector>
 class Output {
-    // TODO:: Add color support
 public:
+    static void error(const ErrorType& type, const std::string& function=__FUNCTION__);
+    static void print(const std::string& message);
+
     static void debug(const std::string& type, const std::string& msg);
-    static void error(const std::string& msg, const std::string& function=__FUNCTION__);
-    static void print(const std::string& msg);
+
+    // This method is redundant, remove it.
     static void multiple_errors(std::vector<std::string>& messages);
 
+    // Curl progress bar.
     static void print_progress_bar(curl_off_t sent, curl_off_t total);
 };

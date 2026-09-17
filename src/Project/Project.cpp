@@ -136,7 +136,7 @@ const std::string Project::create_project_name(const std::string& proj_path) {
 
 int Project::prepare_to_add_files(const std::string& path) {
     if (this->root_dir.empty()) {
-        Output::error("Root dir is empty");
+        Output::error("project is empty", __FUNCTION__);
         return 1;
     }
     return this->add_files_in_project(path);
@@ -145,7 +145,7 @@ int Project::prepare_to_add_files(const std::string& path) {
 
 int Project::add_files_in_project(const std::string& path) {
     if (!fs::exists(path)) {
-        Output::error("Invalid path to file");
+        Output::error("Invalid path to file", __FUNCTION__);
         return 1;
     }
 
