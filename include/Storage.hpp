@@ -7,6 +7,8 @@ namespace fs = std::filesystem;
 
 class Storage {
 public:
+    void environment_setup();
+
     int createConfigDirectory();
     bool createConfigFile();
 

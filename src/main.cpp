@@ -11,11 +11,10 @@ int main(int argc, char** argv) {
     Core saver_core;
     // Service calls order is important to maintain.
 
-    // Internal config
-    Service::instance().store().createConfigDirectory();
-    if (Service::instance().store().createConfigFile()) {
-        Service::instance().store().loadConfig();
-    }
+    // Create directories and files if it does not exists.
+    // Also loads the config into memory.
+    Service::instance().store().environment_setup();
+    
     // Sets base url for saver-remote inside sender.
     Service::instance().send().setBaseUrl();
 

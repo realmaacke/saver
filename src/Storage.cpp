@@ -58,18 +58,33 @@ std::string Storage::getConfigFile() {
     return fs::path(this->getConfigDirectory() / this->configFile).generic_string();
 }
 
-// Checks if dirr exists and if config file exists.
-// if not create them.
-int Storage::createConfigDirectory() {
-    fs::path directory = this->getConfigDirectory();
+void Storage::environment_setup() {
+    fs::path config_dir = this->getConfigDirectory();
 
-    if (fs::exists(directory)) {
-        if (fs::exists(directory / this->configFile)) {
-            return 0;
-        }
-        return this->createConfigFile();
+    // Create config directories, safe to re-run.
+    fs::create_directories(config_dir);
+    // Creates file if it does not exist.
+    if (!fs::exists(config_dir / this->configFile)) 
+        this->createConfigFile();
+
+    this->loadConfig();
+}
+
+bool Storage::createConfigFile() {
+    const std::string configPath = this->getConfigFile();
+    const std::string basePath = this->getResourcePath("config_base.ini");
+
+    if (fs::exists(configPath)) {
+        return true;
     }
-    return fs::create_directories(directory);
+
+    try {
+        fs::copy_file(basePath, configPath);
+        return true;
+    } catch (const fs::filesystem_error& e) {
+        Output::error(e.what(), __FUNCTION__);
+        return false;
+    }
 }
 
 bool Storage::loadConfig() {
@@ -121,21 +136,4 @@ std::string Storage::getFromConfig(const std::string& key, const std::string& fa
 void Storage::addToConfig(const std::string& key, const std::string& value) {
     this->values[key] = value;
     this->saveConfig();
-}
-
-bool Storage::createConfigFile() {
-    const std::string configPath = this->getConfigFile();
-    const std::string basePath = this->getResourcePath("config_base.ini");
-
-    if (fs::exists(configPath)) {
-        return true;
-    }
-
-    try {
-        fs::copy_file(basePath, configPath);
-        return true;
-    } catch (const fs::filesystem_error&) {
-        
-        return false;
-    }
 }
