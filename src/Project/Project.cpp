@@ -15,6 +15,7 @@
 #include "Service.hpp"
 #include "Shipper/ProjectDTO.hpp"
 #include "Shipper/UserDTO.hpp"
+#include "curl/system.h"
 
 namespace fs = std::filesystem;
 
@@ -230,27 +231,27 @@ int Project::upload_commit() {
     CommitObject commit_object = this->commit->unfold_commit_object(current_commit);
     TreeStructure tree = this->tree->unfold_tree(commit_object.tree);
 
-    // passes commit + tree into dto
-    std::vector<ObjectDTO> object_dto_array = this->object->array_obj_to_dto(tree.entries);
+    std::vector<upload::Line> lines;
 
-    ObjectDTO commit_dto;
-    commit_dto.hash = current_commit;
-    commit_dto.content = this->object->base64_encode(
-        this->object->retrive_blob(current_commit)
+    lines.emplace_back(upload::Start{"start", current_commit, current_chapter});
+    
+    this->object->multiple_obj_to_chunks(
+        lines,
+        "chunk",
+        tree.entries
     );
-    object_dto_array.push_back(commit_dto);
 
-    CommitToProject::Request body {current_commit,current_chapter, object_dto_array};
+    lines.emplace_back(upload::Done{"done", true, "done"});
 
-    CommitToProject::Response res = Service::instance().send()
-        .post<CommitToProject::Response, CommitToProject::Request>(
+    upload::Response res = Service::instance().send()
+        .postNDJSON<upload::Response>(
             "proj/upload/" + userInfo.username + "/" + project_name,
-            body,
+            lines,
             true,
             [](curl_off_t now, curl_off_t total) {
                 Output::print_progress_bar(now, total);
             }
-    );
+        );
 
     if (!res.success) {
         Output::warning(ErrorType::BAD_UPLOAD);

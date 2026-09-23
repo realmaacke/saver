@@ -50,7 +50,8 @@ std::string Sender::request(
     const std::string& path,
     const std::string& body,
     bool useAuth,
-    std::function<void(curl_off_t, curl_off_t)> progress
+    std::function<void(curl_off_t, curl_off_t)> progress,
+    const std::string& contentType
 ) {
         CURL* curl = curl_easy_init();
         if (!curl) {
@@ -61,7 +62,10 @@ std::string Sender::request(
 
         std::string response;
         struct curl_slist* headers = nullptr;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        std::string contentTypeHeader = "Content-Type: " + contentType;
+
+        headers = curl_slist_append(headers, contentTypeHeader.c_str());
         if (useAuth && !token.empty()) {
             std::string authHeader = "Authorization: Bearer " + token;
             headers = curl_slist_append(headers, authHeader.c_str());

@@ -33,8 +33,18 @@ class Object {
 
     std::string get_object_type(const fs::path& path);
 
-    ObjectDTO obj_to_dto(TreeNode& node);
-    std::vector<ObjectDTO> array_obj_to_dto(std::vector<TreeNode>& nodes);
+    upload::Line obj_to_chunk(
+        const std::string& type,
+        const TreeNode& node
+    );
+
+    std::vector<upload::Line> multiple_obj_to_chunks(
+        std::vector<upload::Line>& lines,
+        const std::string& type,
+        const std::vector<TreeNode>& nodes
+    );
+    // ObjectDTO obj_to_dto(TreeNode& node);
+    // std::vector<ObjectDTO> array_obj_to_dto(std::vector<TreeNode>& nodes);
 
     // Index
     void update_index(

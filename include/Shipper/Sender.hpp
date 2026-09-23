@@ -1,11 +1,13 @@
 #pragma once
 #include "Output/ErrorCode.hpp"
 #include "Output/Output.hpp"
+#include "Shipper/ProjectDTO.hpp"
 #include "curl/system.h"
 #include <curl/curl.h>
 #include <functional>
 #include <string>
 #include <nlohmann/json.hpp>
+#include <vector>
 
 class Sender {
 public:
@@ -28,6 +30,30 @@ public:
         nlohmann::json j = body;
         std::string raw = this->request("POST", path, j.dump(), useAuth, progress);
         return parse_response<ResponseDTO>(raw);
+    }
+
+    template<typename ResponseDTO>
+    ResponseDTO postNDJSON(
+        const std::string& path,
+        const std::vector<upload::Line>& lines,
+        bool useAuth,
+        std::function<void(curl_off_t, curl_off_t)> progress = nullptr
+    ) {
+        std::string body;
+        for (const auto& line : lines) {
+            std::visit([&body](auto&& l) {
+                body += nlohmann::json(l).dump() + "\n";
+            }, line);
+        }
+        std::string raw = this->request(
+            "POST",
+            path,
+            body,
+            useAuth,
+            progress,
+            "application/x-ndjson"
+        );
+        return parse_response<ResponseDTO>(raw);   
     }
 
 private:
@@ -68,6 +94,7 @@ private:
         const std::string& path,
         const std::string& body,
         bool useAuth,
-        std::function<void(curl_off_t, curl_off_t)> progress = nullptr
+        std::function<void(curl_off_t, curl_off_t)> progress = nullptr,
+        const std::string& contentType = "application/json"
     );
 };

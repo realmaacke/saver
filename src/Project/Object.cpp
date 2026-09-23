@@ -222,21 +222,23 @@ std::string Object::retrive_blob(const std::string& hash) {
     return buffer.str();
 }
 
-ObjectDTO Object::obj_to_dto(TreeNode& node) {
-    ObjectDTO dto;
-    dto.hash = node.hash;
-    dto.mode = node.permissions;
-    if (node.blob) {
-        dto.content = this->base64_encode(*node.blob);
-    }
-    return dto;
+upload::Line Object::obj_to_chunk(const std::string& type, const TreeNode& node) {
+    return upload::Chunk{
+        type,
+        node.hash,
+        node.permissions,
+        node.blob ? this->base64_encode(*node.blob) : ""
+    };
 }
 
-std::vector<ObjectDTO> Object::array_obj_to_dto(std::vector<TreeNode>& nodes) {
-    std::vector<ObjectDTO> ObjectDTO_array;
-
-    for(TreeNode& node : nodes) {
-        ObjectDTO_array.emplace_back(this->obj_to_dto(node));
+std::vector<upload::Line> Object::multiple_obj_to_chunks(
+    std::vector<upload::Line>& lines,
+    const std::string& type,
+    const std::vector<TreeNode>& nodes
+) {
+    for (const TreeNode& node : nodes) {
+        lines.emplace_back(this->obj_to_chunk(type, node));
     }
-    return ObjectDTO_array;
+
+    return lines;
 }
