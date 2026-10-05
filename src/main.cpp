@@ -1,33 +1,45 @@
-#include <iostream>
-#include "Core/Core.hpp"
-#include "Service.hpp"
+#include <unordered_map>
+#include <functional>
 
-/**
-* Main function
-* Important Service calls before user executes command.
-* Core saver_core is the class holding the commands.
-* */
-int main(int argc, char** argv) { 
-    Core saver_core;
-    // Service calls order is important to maintain.
+#include "Commands.hpp"
+#include "Output/Codes/InformationCodes.hpp"
+#include "Output/Output.hpp"
 
-    // Create directories and files if it does not exists.
-    // Also loads the config into memory.
-    Service::instance().store().environment_setup();
-    
-    // Sets base url for saver-remote inside sender.
-    Service::instance().send().setBaseUrl();
+std::unordered_map<std::string, std::function<int(int, char**)> (*)()>
+commands = {
+    {"help",        Commands::help},
+    {"project",     Commands::project},
 
-    // Ensures that logged in user, stays logged in.
-    Service::instance().user().alreadyConnectedUser();
+    {"start",       Commands::start},
+    {"add",         Commands::add},
+    {"remove",      Commands::remove},
 
-    // checks if user already stands in a project.
-    Service::instance().proj().check_if_in_project();
+    {"describe",    Commands::describe},
+    {"upload",      Commands::upload},
+    {"download",    Commands::download},
 
+    {"connect",     Commands::connect},
+    {"disconnect",  Commands::disconnect},
+
+    // add defaults argv[1] = to change
+    // {"default.remote", Command::defaults_remote()}
+};
+
+int execute(const std::string& name, int argc, char** argv) {
+    auto cmd_call = commands.find(name);
+
+    if (cmd_call == commands.end()) {
+        Output::info(InfoCode::UNKNOWN_COMMAND);
+        return 1;
+    }
+    return cmd_call->second()(argc, argv);
+}
+
+int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cout << "Saver: unknown command" << std::endl;
+        Output::info(InfoCode::UNKNOWN_COMMAND);
         return 1;
     }
 
-    return saver_core.execute(argv[1], argc - 1, argv + 1);
+    return execute(argv[1], argc - 1, argv + 1);
 }

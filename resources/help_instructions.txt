@@ -1,0 +1,27 @@
+[About]
+Saver is a version control built in c++.
+Saver requires saver-remote to function fully. <NL>
+
+[Links]
+Saver Remote: https://github.com/realmaacke/saver-remote
+Saver: https://github.com/realmaacke/saver <NL>
+
+[Commands]
+Start a project
+    start       Starts an empty project
+    download    Download an already uploaded project
+<NL>
+Working on a project?
+    add         Add file(s) to the staging area
+    remove      Remove file(s) from the staging area
+    project     Displays settings for the current project
+<NL>
+Ready to save your progress?
+    chapter     Create and manage chapters
+    describe    Describe the changes you have implemented
+    upload      Upload the described changes
+<NL>
+Connect to your remote!
+    connect     Signs in to a user account
+    disconnect  Signs out of your user account
+    register    Open Saver's sign-up page

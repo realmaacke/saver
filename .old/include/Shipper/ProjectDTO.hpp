@@ -49,6 +49,34 @@ struct upload {
         std::optional<std::string> mode;
         std::string content;
 
+        // Helper function since nlohmann cant handle the optional correctly
+        friend void to_json(nlohmann::json& j, const Chunk& c) {
+            j = nlohmann::json{
+                {"type", c.type},
+                {"hash", c.hash},
+                {"content", c.content}
+            };
+            
+            if (c.mode.has_value()) {
+                j["mode"] = *c.mode;
+            } else {
+                j["mode"] = nullptr;
+            }
+        }
+        
+        // Helper function since nlohmann cant handle the optional correctly
+        friend void from_json(const nlohmann::json& j, Chunk& c) {
+            j.at("type").get_to(c.type);
+            j.at("hash").get_to(c.hash);
+            j.at("content").get_to(c.content);
+
+            if (j.contains("mode") && !j["mode"].is_null()) {
+                c.mode = j.at("mode").get<std::string>();
+            } else {
+                c.mode = std::nullopt;
+            }
+        }
+
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(
             Chunk,
             type,

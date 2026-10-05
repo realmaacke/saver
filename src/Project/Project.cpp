@@ -1,263 +1,184 @@
-#include <iostream>
-#include <memory>
-#include <string>
-#include <filesystem>
-#include <vector>
-
 #include "Project/Project.hpp"
-#include "IniStorage.hpp"
-#include "Output/ErrorCode.hpp"
+#include "Environment.hpp"
+#include "INIStorage.hpp"
+#include "Output/Codes/ErrorCodes.hpp"
+#include "Output/Codes/InformationCodes.hpp"
 #include "Output/Output.hpp"
-#include "Project/Cache.hpp"
-#include "Project/Commit.hpp"
-#include "Project/Object.hpp"
-#include "Project/Tree.hpp"
+#include "Project/ProjectImpl.hpp"
+#include "Project/ProjectSettings.hpp"
+#include "Prompt.hpp"
 #include "Service.hpp"
-#include "Shipper/ProjectDTO.hpp"
-#include "Shipper/UserDTO.hpp"
-#include "curl/system.h"
+#include <cstddef>
+#include <filesystem>
+#include <optional>
+#include <string>
 
-namespace fs = std::filesystem;
-
-Project::Project()
-{
-    this->object = std::make_unique<Object>();
-    this->cache = std::make_unique<Cache>(this->object.get());
-    this->commit = std::make_unique<Commit>(this->object.get());
-
-
-    if (this->check_if_in_project()) {
-        this->object->create_obj_directory(this->root_dir);
-        this->object->set_paths(this->root_dir);
-        this->tree = std::make_unique<Tree>(this->root_dir, this->object.get());
-        this->refs = std::make_unique<Refs>(this->root_dir);
-    }
-
+Project::Project() {
+    this->p_impl = ProjectImpl();
 }
 
-
-/*
-* Runs on every start.
-* Called from main.cpp
-*/
-bool Project::check_if_in_project() {
-    if (fs::exists(".saver/proj.ini")) {
-        this->root_dir = ".";
+bool Project::inside_project() {
+    if (this->p_impl.find_project_root()) {
         return true;
     }
     return false;
 }
 
-int Project::create_new_project(
-    const std::string& proj_path,
-    const std::string& optional_flag) {
-    
-    std::string name;
+void Project::project_environment() {
+    std::optional<fs::path> root = this->p_impl.find_project_root();
 
-    if (fs::exists(fs::path(proj_path) / ".saver")) {
-        Output::warning(ErrorType::ALREADY_IN_PROJECT);
-        return 1;
+    if (!root) {
+        Output::info(InfoCode::PROJECT_NOT_FOUND);
+        return;
     }
-    
-    // if not signed in, then return;
-    if (!Service::instance().user().alreadyConnectedUser()) {
-        Output::warning(ErrorType::AUTH_REQUIRED);
-        Output::print("Syntax: saver login <username> <password>");
-        return 1;
-    }
+    this->set_project_directory(root->string());
+}
 
-    GetUserInfo::Response userInfo = Service::instance().send()
-        .get<GetUserInfo::Response>(
-            "auth/getUserInfo",
-            true
-    );
+void Project::system_environment() {
+    fs::path config_directory = LocalConfigDir();
 
-    if (!userInfo.success ||  (!std::is_integral_v<decltype(userInfo.userId)>)) {
-        Output::warning(ErrorType::USER_RETRIVAL);
-        return 1;
+    fs::create_directories(config_directory);
+
+    if (fs::exists(config_directory / "global_saver.ini")) {
+        return;
     }
 
-    if (!fs::exists(proj_path)) {
-        Output::warning(ErrorType::INVALID_PATH);
-        return 1;
+    fs::path base_config = ResourceDir("global_config_base.ini");
+
+    try {
+        fs::copy_file(base_config, fs::path(config_directory / "global_saver.ini"));
+    } catch (const fs::filesystem_error& _) {
+        Output::error(ErrorCode::INTERNAL_FILE_ERROR, __FUNCTION__);
+        return;
     }
-    bool optional = (!optional_flag.empty() && optional_flag == "-f");
+}
 
-    if (!fs::is_empty(proj_path) && !optional) {
-        Output::warning(ErrorType::DIRECTORY_NOT_EMPTY);
-        Output::print("To force create an directory, add -f flag");
-        return 1;
-    }
+int Project::project_help() {
+    return this->p_impl.impl_help();
+}
 
-    if (!fs::is_empty(proj_path) && optional) {
-        Output::print("Creating project inside : " + proj_path);   
-    } else {
-        Output::print("Creating project");
-    }
-    
-    // call init_project
-    name = this->create_project_name(proj_path);
+int Project::project_status() {
+    this->project_environment();
+ 
+    INIStorage storage(fs::path(this->project_directory) / ".saver" / "project.ini");
 
-    CreateProject::Response project_result = Service::instance().send()
-        .get<CreateProject::Response>(
-            "proj/init/" + userInfo.username + "/" + name,
-            true
-    );
+    storage.loadStorage();
 
-    if (!project_result.success) {
-        Output::warning(ErrorType::COULD_NOT_CREATE_PROJ);
-        Output::print("reason: " + project_result.message);
-        return 1;
-    }
+    ProjectSettings settings;
 
-    Output::print("Succesfully created " + name);
-    
-    this->create_saver_files(proj_path, name);
+    settings.project_name = storage.getValue("project_name").value_or("undefined");
+    settings.project_remote = storage.getValue("project_remote").value_or("undefined");
+    settings.default_chapter = storage.getValue("default_chapter").value_or("undefined");
+    settings.description = storage.getValue("description").value_or("undefined");
+    std::string start = storage.getValue("start_date").value_or("undefined");
+    std::string last = storage.getValue("last_sync").value_or("undefined");
+    Output::print("[Project settings]");
+    Output::print("Project name     : " + settings.project_name);
+    Output::print("Project remote   : " + settings.project_remote);
+    Output::print("Default chapter  : " + settings.default_chapter);
+    Output::print("Private project  : " + storage.getValue("is_private").value_or("undefined"));
+    Output::print("Creation date    : " + start);
+    Output::print("Last remote sync : " + last);
+    Output::print("Description      : " + settings.description.value_or(""));
+
     return 0;
 }
 
-void Project::create_saver_files(
-    const fs::path& proj_root,
-    const std::string& name
-) {
-    IniStorage storage(proj_root / ".saver/proj.ini");
-    storage.createStorage();
-    storage.updateStorage("project_name", name);
-    storage.saveStorage();
+int Project::project_start() {
+    // creates .local/share/saver stuff
+    this->system_environment(); // THIS NEEDS TO BE AT THE START OF THE METHOD.
 
-    // Creates index file here.
-    
-    this->object->create_index_file(proj_root);
-}
-
-const std::string Project::create_project_name(const std::string& proj_path) {
-    std::string name;
-    fs::path folderName(proj_path);
-
-    std::cout << "Name of project (" << folderName.filename().string() << "): ";
-    std::getline(std::cin, name);
-
-    if (name.empty()) {
-        return folderName.filename().string();
-    }
-
-    return name;
-}
-
-int Project::prepare_to_add_files(const std::string& path) {
-    if (this->root_dir.empty()) {
-        Output::warning(ErrorType::EMPTY_PROJECT);
-        return 1;
-    }
-    return this->add_files_in_project(path);
-    // what to do with the cache now?:
-}
-
-int Project::add_files_in_project(const std::string& path) {
-    if (!fs::exists(path)) {
-        return 1;
-    }
-
-    if (!fs::is_directory(path) && fs::is_regular_file(path)) {
-        this->cache->add_to_cache(path);
-    }
-
-    if (fs::is_directory(path)) {
-        for (const fs::directory_entry& entry : fs::directory_iterator(path)) {
-            if (fs::is_directory(entry)) {
-                this->add_files_in_project(entry.path());
-            } else {
-                this->cache->add_to_cache(entry.path());
-            }
-        }
-    }
-    return 0;
-}
-
-int Project::describe_cache(const std::string& message) {
-    if (message.empty()) {
-        Output::print("The describe cant be empty");
+    // checks if already inside a project
+    std::optional<fs::path> current = this->p_impl.find_project_root();
+    if (current) {
+        Output::info(InfoCode::ALREADY_IN_PROJECT);
         return 0;
     }
-    std::string tree_hash = this->tree->describe_tree(message);
-    std::string parent_hash = this->refs->get_current_commit();
-    std::string commit_hash = this->commit->create_commit_object(tree_hash, parent_hash, message, "");
 
-    this->refs->update_current_commit(commit_hash);
-
-    this->object->reset_index();
-
-    return 0;
-}
-
-int Project::upload_commit() {
-    // if not signed in, then return;
-    if (!Service::instance().user().alreadyConnectedUser()) {
-        Output::warning(ErrorType::AUTH_REQUIRED);
-        Output::print("Syntax: saver login <username> <password>");
-        return 1;
+    if (!Service::instance().usr().isConnected()) {
+        Output::info(InfoCode::NOT_LOGGED_IN);
+        return 0;
     }
-
-    GetUserInfo::Response userInfo = Service::instance().send()
-        .get<GetUserInfo::Response>(
-            "auth/getUserInfo",
-            true
-    );
-
-    if (!userInfo.success ||  (!std::is_integral_v<decltype(userInfo.userId)>)) {
-        Output::warning(ErrorType::USER_RETRIVAL);
-        return 1;
-    }
-
-    const std::string current_commit = this->refs->get_current_commit();
-    const std::string current_chapter = this->refs->get_current_chapter();
-
-    if (current_commit.empty()) {
-        Output::warning(ErrorType::NO_DESCRIBE);
-        return 1;
-    }
-
-    if (current_chapter.empty()) {
-        Output::warning(ErrorType::DETERMINE_CHAPTER);
-        return 1;
-    }
-
-    // project info
-    IniStorage storage(fs::path(fs::path(this->root_dir) / ".saver/proj.ini"));
-    storage.loadStorage();
-    std::string project_name = storage.getValue("project_name");
-
-    // unfold commit + tree
-    CommitObject commit_object = this->commit->unfold_commit_object(current_commit);
-    TreeStructure tree = this->tree->unfold_tree(commit_object.tree);
-
-    std::vector<upload::Line> lines;
-
-    lines.emplace_back(upload::Start{"start", current_commit, current_chapter});
     
-    this->object->multiple_obj_to_chunks(
-        lines,
-        "chunk",
-        tree.entries
-    );
+    
+    ProjectSettings settings;
+    
+    settings.project_name = prompt("Project name");
 
-    lines.emplace_back(upload::Done{"done", true, "done"});
 
-    upload::Response res = Service::instance().send()
-        .postNDJSON<upload::Response>(
-            "proj/upload/" + userInfo.username + "/" + project_name,
-            lines,
-            true,
-            [](curl_off_t now, curl_off_t total) {
-                Output::print_progress_bar(now, total);
-            }
-        );
+    // if name == taken, redo
+    if (!polar_prompt("Use default saver remote", true)) {
+        settings.project_remote = prompt("Saver remote url");
+    } else {
+        // take local saver remote.
+        INIStorage local(LocalConfigFile());
+        local.loadStorage();
 
-    if (!res.success) {
-        Output::warning(ErrorType::BAD_UPLOAD);
-        return 1;
+        std::string url = local.getValue("API_URL").value_or("undefined");
+        std::string port = local.getValue("API_PORT").value_or("undefined");
+
+        if (url == "undefined" || port == "undefined") {
+            Output::error(ErrorCode::INTERNAL_RESOURCE_MISSING);
+            return 1;
+        }
+
+        std::erase(url, '"');
+        std::erase(port, '"');
+
+        if (url.ends_with("/")) {
+            url = url.substr(0, url.size() - 1);
+        }
+
+        settings.project_remote = url + ":" + port + "/";
     }
 
+    settings.default_chapter = prompt("Default chapter", "main");
+    settings.is_private = polar_prompt("Make this project public?", true);
 
-    return 0;
+    std::string desc = prompt("Description (optional)");
+
+    if (!desc.empty()) settings.description = desc;
+
+
+    return this->p_impl.impl_start(settings);
 }
+
+int Project::project_add(const std::string& path) {
+    this->project_environment();
+    return this->p_impl.impl_add(path);
+}
+
+int Project::project_removal(const std::string& path) {
+    this->project_environment();
+    return this->p_impl.impl_remove(path);
+}
+
+int Project::project_describe(const std::string& message) {
+    this->project_environment();
+
+    if (message.empty()) {
+        Output::print("Describe cant be empty");
+        return 0;
+    }
+
+    return this->p_impl.impl_describe(message);
+}
+
+int Project::project_upload() {
+    this->project_environment();
+
+    // check if user signed in
+    // check that user owns repo.
+    
+
+    // pass user struct to upload?
+    return this->p_impl.impl_upload();
+}
+
+
+// Private methods
+
+void Project::set_project_directory(const std::string& path) {
+    this->project_directory = path;
+}
+

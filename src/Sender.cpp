@@ -1,7 +1,11 @@
-#include "Shipper/Sender.hpp"
+#include "include/Sender/Sender.hpp"
+#include "INIStorage.hpp"
+#include "Environment.hpp"
+#include "Output/Codes/ErrorCodes.hpp"
+#include "Output/Output.hpp"
 #include "Service.hpp"
 #include "curl/system.h"
-#include <iostream>
+#include <optional>
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -15,15 +19,20 @@ void Sender::setToken(const std::string& token) {
  * Sets API-URL from config.
  */
 void Sender::setBaseUrl() {
-    std::string url = Service::instance()
-            .store().getFromConfig("API_URL");
+    INIStorage storage(LocalConfigFile());
+
+    storage.loadStorage();
+
+    std::string url = storage.getValue("API_URL").value_or("");
+    std::string port = storage.getValue("API_PORT").value_or("");
     
-    std::string port = Service::instance()
-        .store().getFromConfig("API_PORT");
-
-
-    // Removes " from str, which  may come from .ini file.
     std::erase(url, '"');
+    std::erase(port, '"');
+
+    if (url.empty() || port.empty()) {
+        Output::error(ErrorCode::INTERNAL_VARS_UNSET, __FUNCTION__);
+        return;
+    }
 
     // Removes trailing slash from url.
     if (url.ends_with("/")) {
@@ -53,6 +62,8 @@ std::string Sender::request(
     std::function<void(curl_off_t, curl_off_t)> progress,
     const std::string& contentType
 ) {
+        this->setBaseUrl();
+
         CURL* curl = curl_easy_init();
         if (!curl) {
             throw std::runtime_error("failed to init curl");

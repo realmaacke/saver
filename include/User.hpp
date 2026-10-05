@@ -1,14 +1,24 @@
 #pragma once
 #include <string>
-class User {
+#include <nlohmann/json.hpp>
 
+struct UserInfo {
+    std::string username;
+    nlohmann::json token;
+    int user_id;
+};
+
+class User {
 public:
-    // Login/Logout
-    int connectUser(const std::string& username, const std::string& password);
+    void setConnected(bool value);
+    bool isConnected();
+
+    int connectUser();
+
     int disconnectUser();
-    // Status of user.
-    bool alreadyConnectedUser();
-    
+
+    UserInfo getUser();
+
 private:
-    bool m_alreadyLoggedIn = false;
+    bool is_connected = false;
 };

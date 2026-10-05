@@ -1,7 +1,7 @@
 BUILD_DIR := build
 MAKEFLAGS += --silent
 
-.PHONY: all build rebuild run clean
+.PHONY: all build rebuild run clean local env
 
 all: build
 
@@ -20,3 +20,9 @@ run: build
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+local:
+	rm -rf .saver
+
+env:
+	rm -rf ~/.local/share/saver

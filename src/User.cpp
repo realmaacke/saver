@@ -1,68 +1,92 @@
-#include "User.hpp"
-#include <string>
-#include "Output/ErrorCode.hpp"
+#include "include/User.hpp"
+#include "Environment.hpp"
+#include "INIStorage.hpp"
+#include "Output/Codes/ErrorCodes.hpp"
+#include "Output/Codes/InformationCodes.hpp"
 #include "Output/Output.hpp"
+#include "Prompt.hpp"
+#include "Sender/DTO/UserDTO.hpp"
 #include "Service.hpp"
-#include "Shipper/UserDTO.hpp"
+#include <optional>
+#include <string>
 
-bool User::alreadyConnectedUser() {
-    // Gets saved token
-    std::string currentToken = Service::instance().store().getFromConfig("API_TOKEN");
-
-    // Checks if token is legitimate
-    if (!currentToken.empty()) {
-        Service::instance().send().setToken(currentToken);
-        RenewToken::Response token_res = Service::instance().send()
-            .get<RenewToken::Response>(
-                "auth/renew",
-                true
-            );
-        
-        // if it has, use that as user.
-        if (token_res.success && token_res.token.is_string()) {
-            Service::instance().send().setToken(token_res.token);
-            Service::instance().store().addToConfig("API_TOKEN", token_res.token);
-            this->m_alreadyLoggedIn = true;
-            return true;
-        }
-    }
-    return false;
+void User::setConnected(bool value) {
+    this->is_connected = value;
 }
 
-int User::connectUser(const std::string& username, const std::string& password) {
-    if (this->alreadyConnectedUser()) {
-        Output::print("User already logged in");
-        Output::print("use: saver disconnect - to disconnect the current user");
-        return 0;
-    }
+bool User::isConnected() {
+    std::string cfgPath = LocalConfigFile();
 
-    ConnectUser::Request body {username, password};
+    INIStorage appStorage(cfgPath);
+    appStorage.loadStorage();
+    std::optional<std::string> token = appStorage.getValue("API_TOKEN").value_or("undefined");
 
-    ConnectUser::Response res = Service::instance().send()
-        .post<ConnectUser::Response, ConnectUser::Request>(
-            "auth/connect",
-            body,
-            false
+    if (!token.has_value()) { return false; }
+    if (token.has_value() && token.value() == "undefined") { return false; }
+
+    Service::instance().send().setToken(token.value());
+
+    UserVerify::Response res = Service::instance().send().get<UserVerify::Response>(
+        "auth/renew",
+        true
     );
-    
-    if (res.success && res.token.is_string()) {
-        Service::instance().send().setToken(res.token);
-        Service::instance().store().addToConfig("API_TOKEN", res.token);
-        Output::print("Connection successful!");
+
+    Output::print(res.message);
+    Output::print(res.success ? "true" : "false");
+    Output::print(res.token);
+
+    return true;
+    // querry for token
+
+    // use stored token
+}
+
+int User::connectUser() {
+    if(this->isConnected()) {
+        Output::info(InfoCode::ALREADY_LOGGED_IN);
         return 0;
     }
-    Output::warning(ErrorType::COULD_NOT_AUTH);
-    return 1;
+
+    std::string username = prompt("Username");
+    std::string password = hidden_prompt("Password");
+
+    ConnectUserDTO::Request body{username, password};
+    ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
+    (
+        "auth/connect",
+        body,
+        false
+    );
+
+    if (!res.success) {
+        Output::info(InfoCode::COULD_NOT_LOG_IN);
+        return 0;
+    }
+
+    if (!res.token.is_string()) {
+        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+        return 1;
+    }
+
+    INIStorage storage(LocalConfigFile());
+    storage.loadStorage();
+    storage.updateStorage("API_TOKEN", res.token.get<std::string>());
+    storage.saveStorage();
+
+    Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
+    return 0;
 }
 
 int User::disconnectUser() {
-    if (!this->alreadyConnectedUser()) {
-        Output::print("You are not connected to remote");
-        return 0;
-    }
 
-    Service::instance().store().addToConfig("API_TOKEN", "");
+}
 
-    Output::print("You have been disconnected from remote");
-    return 0;
+UserInfo User::getUser() {
+    // querry for user here.
+
+    return UserInfo{
+        "test",
+        "token-here",
+        1
+    };
 }

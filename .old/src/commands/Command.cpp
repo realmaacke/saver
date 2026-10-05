@@ -145,7 +145,7 @@ cmd Command::describe(){
 */
 cmd Command::upload(){
     return [](int, char**) {
-        return Service::instance().proj().upload_commit();
+        return Service::instance().proj().upload_describe();
     };
 };
 
