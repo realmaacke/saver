@@ -103,8 +103,6 @@ int Project::project_start() {
     }
     UserInfo user = Service::instance().usr().getUser();
     
-    
-    
     std::string name = prompt("Project name");
     
     ProjectCreation::Response res = Service::instance().send().get<ProjectCreation::Response>

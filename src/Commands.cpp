@@ -77,5 +77,7 @@ cmd Commands::connect() {
 };
 
 cmd Commands::disconnect() {
-    return 0;
+    return [] (int ,char**) {
+        return Service::instance().usr().disconnectUser();
+    };
 };
