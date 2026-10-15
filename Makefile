@@ -28,7 +28,7 @@ env:
 	rm -rf ~/.local/share/saver
 
 test: build
-	meson test -C $(BUILD_DIR) app_unit_tests
+	meson test -C $(BUILD_DIR) app_unit_tests --print-errorlogs
 
 test-pipeline:
 	meson test -C $(BUILD_DIR) app_unit_tests --print-errorlogs
