@@ -39,7 +39,7 @@ namespace commands_help {
 
     TEST(HelpTest, ReturnsOneWhenFileCannotBeOpened) {
         if (geteuid() == 0) GTEST_SKIP() << "root ignores file permissions";
-        fs::path file = fs::temp_directory_path() / "saver_help_noperm.txt";
+        fs::path const file = fs::temp_directory_path() / "saver_help_noperm.txt";
         std::ofstream(file) << "x\n";
         fs::permissions(file, fs::perms::none);
         MockResourcePath() = file;

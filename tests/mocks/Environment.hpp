@@ -14,6 +14,6 @@ inline fs::path& MockResourcePath() {
     return p;
 }
 
-inline fs::path ResourceDir(const std::string&) {
+inline fs::path ResourceDir(const std::string& /*unused*/) {
     return MockResourcePath();
 }
