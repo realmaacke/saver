@@ -12,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-static inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
+static inline int run_command(const cmd& command, std::initializer_list<const char*> args) {
     std::vector<std::string> arg_buffers(args.begin(), args.end());
     std::vector<char*> argv;
     argv.reserve(arg_buffers.size() + 1);
@@ -21,7 +21,7 @@ static inline int run_command(const cmd& c, std::initializer_list<const char*> a
         argv.push_back(arg.data());
     }
     argv.push_back(nullptr);
-    return c(static_cast<int>(arg_buffers.size()), argv.data());
+    return command(static_cast<int>(arg_buffers.size()), argv.data());
 }
 
 namespace commands_help {
@@ -38,8 +38,8 @@ namespace commands_help {
     }
 
     TEST(HelpTest, ReturnsOneWhenFileCannotBeOpened) {
-        if (geteuid() == 0) GTEST_SKIP() << "root ignores file permissions";
-        fs::path const file = fs::temp_directory_path() / "saver_help_noperm.txt";
+        if (geteuid() == 0) { GTEST_SKIP() << "root ignores file permissions"; }
+        fs::path file = fs::temp_directory_path() / "saver_help_noperm.txt";
         std::ofstream(file) << "x\n";
         fs::permissions(file, fs::perms::none);
         MockResourcePath() = file;
