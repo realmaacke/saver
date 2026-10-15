@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #include "Commands.hpp"
 #include "Environment.hpp"
@@ -41,7 +42,7 @@ namespace commands_help {
 
     TEST(HelpTest, ReturnsOneWhenFileCannotBeOpened) {
         if (geteuid() == 0) { GTEST_SKIP() << "root ignores file permissions"; }
-        fs::path file = fs::temp_directory_path() / "saver_help_noperm.txt";
+        const fs::path file = fs::temp_directory_path() / "saver_help_noperm.txt";
         std::ofstream(file) << "x\n";
         fs::permissions(file, fs::perms::none);
         MockResourcePath() = file;
