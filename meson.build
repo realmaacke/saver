@@ -27,6 +27,7 @@ add_project_arguments(
 sources = run_command('find', 'src', '-name', '*.cpp', check: true).stdout().strip().split('\n')
 inc = include_directories('include', 'external')
 
+
 # Everything except main goes into a library so tests can link it
 lib_sources = []
 foreach s : sources
@@ -37,10 +38,18 @@ endforeach
 
 app_deps = [curl_dep, crypto_dep, ssl_dep, json_dep]
 
+mock_inc = include_directories('tests/mocks')
+
 saver_lib = static_library('saver_core',
   lib_sources,
   include_directories: inc,
   dependencies: app_deps
+)
+
+saver_lib_test = static_library('saver_core_test',
+  lib_sources,
+  include_directories : [mock_inc, inc],
+  dependencies : app_deps
 )
 
 executable('saver',
@@ -55,8 +64,8 @@ executable('saver',
 tests = run_command('find', 'tests', '-name', '*.cpp', check: true).stdout().strip().split('\n')
 test_exe = executable('tests',
   tests,
-  include_directories : inc,
-  link_with : saver_lib,
+  include_directories : [mock_inc, inc],
+  link_with : saver_lib_test,
   dependencies : [gtest_dep, gmock_dep] + app_deps
 )
 test('app_unit_tests', test_exe)
