@@ -18,8 +18,9 @@ jobs:
       
       - name: Setup dependencies
         run: | 
-          pip install meson ninja
-          make rebuild
+          pip install meson ninja gcovr
+          meson setup build -Db_coverage=true
+          ninja -C build
 
       - name: Execute tests
         run: make test-pipeline
