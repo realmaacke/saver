@@ -44,8 +44,8 @@ int User::connectUser() {
     std::string username = prompt("Username");
     std::string password = hidden_prompt("Password");
 
-    ConnectUserDTO::Request body{username, password};
-    ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
+    ConnectUserDTO::Request const body{username, password};
+    ConnectUserDTO::Response const res = Service::instance().send().post<ConnectUserDTO::Response>
     (
         "auth/connect",
         body,
