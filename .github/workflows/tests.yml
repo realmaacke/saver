@@ -1,7 +1,7 @@
 name: G-Tests
 
 on:
-  pull_request: ["main"]
+  pull_request:
 
 jobs:
   tests:
