@@ -18,12 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Meson and Generate Compdb
-        run: |
-          meson setup build
-          ninja -C build -t compdb > build/compile_commands.json
-
-
       - uses: ZedThree/clang-tidy-review@v0.23.1
         id: review
         with:
@@ -33,7 +27,7 @@ jobs:
             ninja-build,
             pkg-config,
             g++
-          cmake_command: "true"
+          cmake_command: meson setup build && ninja -C build -t compdb > build/compile_commands.json
           exclude: "external/*,subprojects/*,.old/*"
 
       - if: steps.review.outputs.total_comments > 0
