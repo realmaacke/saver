@@ -16,6 +16,7 @@ jobs:
         with:
           python-version: '3.x'
       
+      - name: Setup dependencies
       - run: pip install meson ninja
       - run: make rebuild
 
