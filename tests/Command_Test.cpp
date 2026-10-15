@@ -25,7 +25,7 @@ namespace commands_help {
         EXPECT_EQ(run_command(Commands::help(), {"saver", "help"}), 1);
     }
     TEST(HelpTest, ReturnsZeroWhenFileOpens) {
-        fs::path file = fs::temp_directory_path() / "saver_help.txt";
+        fs::path const file = fs::temp_directory_path() / "saver_help.txt";
         std::ofstream(file) << "# c\nussage: saver<NL>\n";
         MockResourcePath() = file;
         EXPECT_EQ(run_command(Commands::help(), {"saver", "help"}), 0);
