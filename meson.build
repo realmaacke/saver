@@ -15,7 +15,7 @@ install_subdir('resources', install_dir : pkg_datadir)
 curl_dep    = dependency('libcurl', fallback : ['curl', 'curl_dep'])
 crypto_dep  = dependency('libcrypto', fallback : ['openssl', 'libcrypto_dep'])
 ssl_dep     = dependency('libssl', fallback : ['openssl', 'libssl_dep'])
-json_dep    = dependency('nlohmann_json')
+json_dep    = dependency('nlohmann_json', fallback : ['nlohmann_json', 'nlohmann_json_dep'])
 
 sources = run_command('find', 'src', '-name', '*.cpp', check: true).stdout().strip().split('\n')
 inc = include_directories('include', 'external')
