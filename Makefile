@@ -1,7 +1,7 @@
 BUILD_DIR := build
 MAKEFLAGS += --silent
 
-.PHONY: all build rebuild run clean local env
+.PHONY: all build rebuild run clean local env test test-pipeline
 
 all: build
 
@@ -26,3 +26,9 @@ local:
 
 env:
 	rm -rf ~/.local/share/saver
+
+test: build
+	meson test -C $(BUILD_DIR) app_unit_tests
+
+test-pipeline:
+	meson test -C $(BUILD_DIR) app_unit_tests --print-errorlogs

@@ -16,18 +16,47 @@ curl_dep    = dependency('libcurl', fallback : ['curl', 'curl_dep'])
 crypto_dep  = dependency('libcrypto', fallback : ['openssl', 'libcrypto_dep'])
 ssl_dep     = dependency('libssl', fallback : ['openssl', 'libssl_dep'])
 json_dep    = dependency('nlohmann_json', fallback : ['nlohmann_json', 'nlohmann_json_dep'])
-
-sources = run_command('find', 'src', '-name', '*.cpp', check: true).stdout().strip().split('\n')
-inc = include_directories('include', 'external')
+gtest_dep = dependency('gtest_main', fallback : ['gtest', 'gtest_main_dep'])
+gmock_dep = dependency('gmock', fallback : ['gtest', 'gmock_dep'])
 
 add_project_arguments(
   '-DAPP_RESOURCE_DIR="' + pkg_datadir / 'resources"',
   language : 'cpp'
 )
 
+sources = run_command('find', 'src', '-name', '*.cpp', check: true).stdout().strip().split('\n')
+inc = include_directories('include', 'external')
+
+# Everything except main goes into a library so tests can link it
+lib_sources = []
+foreach s : sources
+  if s != 'src/main.cpp'
+    lib_sources += s
+  endif
+endforeach
+
+app_deps = [curl_dep, crypto_dep, ssl_dep, json_dep]
+
+saver_lib = static_library('saver_core',
+  lib_sources,
+  include_directories: inc,
+  dependencies: app_deps
+)
+
 executable('saver',
-  sources,
+  'src/main.cpp',
   install: false,
   include_directories : inc,
-  dependencies : [curl_dep, crypto_dep, ssl_dep, json_dep]
+  link_with : saver_lib,
+  dependencies : app_deps
 )
+
+
+tests = run_command('find', 'tests', '-name', '*.cpp', check: true).stdout().strip().split('\n')
+test_exe = executable('tests',
+  tests,
+  include_directories : inc,
+  link_with : saver_lib,
+  dependencies : [gtest_dep, gmock_dep] + app_deps
+)
+test('app_unit_tests', test_exe)
