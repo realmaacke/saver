@@ -42,6 +42,12 @@ int User::connectUser() {
     std::string username = prompt("Username");
     std::string password = hidden_prompt("Password");
 
+    // Test commit for automated workflow.
+    int x = 0;
+    int y = 10;
+    auto z = x + y;
+    Output::print(std::to_string(z));
+
     // ConnectUserDTO::Request body{username, password};
     // ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
     // (
