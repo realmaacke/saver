@@ -52,3 +52,8 @@ namespace commands_help {
     }
 }
 
+namespace commands_add {
+    TEST(AddTest, ReturnsZeroWithLessArgs) {
+        EXPECT_EQ(run_command(Commands::add(), {"saver", "add"}), 0);
+    }
+}
