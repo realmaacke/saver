@@ -13,7 +13,7 @@
 namespace fs = std::filesystem;
 
 namespace {
-    static inline int run_command(const cmd& command, std::initializer_list<const char*> args) {
+    inline int run_command(const cmd& command, std::initializer_list<const char*> args) {
         std::vector<std::string> arg_buffers(args.begin(), args.end());
         std::vector<char*> argv;
         argv.reserve(arg_buffers.size() + 1);

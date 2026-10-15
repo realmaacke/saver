@@ -10,8 +10,8 @@
 namespace fs = std::filesystem;
 
 inline fs::path& MockResourcePath() {
-    static fs::path p;
-    return p;
+    static fs::path path;
+    return path;
 }
 
 inline fs::path ResourceDir(const std::string& /*unused*/) {
