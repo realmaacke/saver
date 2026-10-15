@@ -18,14 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set base_dir
-        run: echo "base_dir=$(pwd)" >> $GITHUB_ENV
-
       - uses: ZedThree/clang-tidy-review@v0.23.1
         id: review
         with:
           build_dir: build
-          base_dir: ${{ env.base_dir }}
+          base_dir: build
           apt_packages: >-
             meson,
             ninja-build,
@@ -36,7 +33,7 @@ jobs:
             python3 -c "import json;
             p = 'build/compile_commands.json';
             data = json.load(open(p));
-            [e.update({'file': e['file'].replace('../', '/github/workspace/')}) for e in data];
+            [e.update({'file': e['file'].replace('../', '')}) for e in data];
             json.dump(data, open(p, 'w'))"
           exclude: "external/*,subprojects/*,.old/*"
 
