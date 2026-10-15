@@ -12,16 +12,18 @@
 
 namespace fs = std::filesystem;
 
-static inline int run_command(const cmd& command, std::initializer_list<const char*> args) {
-    std::vector<std::string> arg_buffers(args.begin(), args.end());
-    std::vector<char*> argv;
-    argv.reserve(arg_buffers.size() + 1);
-
-    for (std::basic_string<char>& arg : arg_buffers) {
-        argv.push_back(arg.data());
+namespace {
+    static inline int run_command(const cmd& command, std::initializer_list<const char*> args) {
+        std::vector<std::string> arg_buffers(args.begin(), args.end());
+        std::vector<char*> argv;
+        argv.reserve(arg_buffers.size() + 1);
+    
+        for (std::basic_string<char>& arg : arg_buffers) {
+            argv.push_back(arg.data());
+        }
+        argv.push_back(nullptr);
+        return command(static_cast<int>(arg_buffers.size()), argv.data());
     }
-    argv.push_back(nullptr);
-    return command(static_cast<int>(arg_buffers.size()), argv.data());
 }
 
 namespace commands_help {
