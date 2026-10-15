@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/realmaacke/saver/graph/badge.svg?token=ZXDLW2LKWY)](https://codecov.io/github/realmaacke/saver)
+
 # Saver
 Saver is a version control built in c++.
 Saver aims to be git like.
