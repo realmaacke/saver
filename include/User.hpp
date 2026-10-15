@@ -4,7 +4,6 @@
 
 struct UserInfo {
     std::string username;
-    nlohmann::json token;
     int user_id;
 };
 

@@ -7,6 +7,7 @@
 #include "Prompt.hpp"
 #include "Sender/DTO/UserDTO.hpp"
 #include "Service.hpp"
+#include "nlohmann/json.hpp"
 #include <optional>
 #include <string>
 
@@ -25,12 +26,13 @@ bool User::isConnected() {
     if (token.has_value() && token.value() == "undefined") { return false; }
 
     Service::instance().send().setToken(token.value());
-
+    
     UserVerify::Response res = Service::instance().send().get<UserVerify::Response>(
         "auth/renew",
         true
     );
-    return true;
+
+    return res.success;
 }
 
 int User::connectUser() {
@@ -42,30 +44,30 @@ int User::connectUser() {
     std::string username = prompt("Username");
     std::string password = hidden_prompt("Password");
 
-    // ConnectUserDTO::Request body{username, password};
-    // ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
-    // (
-    //     "auth/connect",
-    //     body,
-    //     false
-    // );
+    ConnectUserDTO::Request const body{username, password};
+    ConnectUserDTO::Response const res = Service::instance().send().post<ConnectUserDTO::Response>
+    (
+        "auth/connect",
+        body,
+        false
+    );
 
-    // if (!res.success) {
-    //     Output::info(InfoCode::COULD_NOT_LOG_IN);
-    //     return 0;
-    // }
+    if (!res.success) {
+        Output::info(InfoCode::COULD_NOT_LOG_IN);
+        return 0;
+    }
 
-    // if (!res.token.is_string()) {
-    //     Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
-    //     return 1;
-    // }
+    if (!res.token.is_string()) {
+        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+        return 1;
+    }
 
-    // INIStorage storage(LocalConfigFile());
-    // storage.loadStorage();
-    // storage.updateStorage("API_TOKEN", res.token.get<std::string>());
-    // storage.saveStorage();
+    INIStorage storage(LocalConfigFile());
+    storage.loadStorage();
+    storage.updateStorage("API_TOKEN", res.token.get<std::string>());
+    storage.saveStorage();
 
-    // Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
+    Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
     return 0;
 }
 
@@ -97,7 +99,6 @@ UserInfo User::getUser() {
     try {
         user.user_id = res.data.at("user_id").get<int>();
         user.username = res.data.at("username").get<std::string>();
-        user.token = res.data.at("token").get<std::string>();
     } catch (const nlohmann::json::exception&) {
         Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
         return UserInfo{};

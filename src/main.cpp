@@ -42,7 +42,5 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    Service::instance().usr().setConnected(Service::instance().usr().isConnected());
-
     return execute(argv[1], argc - 1, argv + 1);
 }
