@@ -12,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
+static inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
     std::vector<std::string> arg_buffers(args.begin(), args.end());
     std::vector<char*> argv;
     argv.reserve(arg_buffers.size() + 1);
@@ -30,7 +30,7 @@ namespace commands_help {
         EXPECT_EQ(run_command(Commands::help(), {"saver", "help"}), 1);
     }
     TEST(HelpTest, ReturnsZeroWhenFileOpens) {
-        fs::path file = fs::temp_directory_path() / "saver_help.txt";
+        fs::path const file = fs::temp_directory_path() / "saver_help.txt";
         std::ofstream(file) << "# c\nussage: saver<NL>\n";
         MockResourcePath() = file;
         EXPECT_EQ(run_command(Commands::help(), {"saver", "help"}), 0);
