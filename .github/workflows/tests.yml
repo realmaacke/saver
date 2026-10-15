@@ -12,13 +12,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup dependencies
-      - uses: actions/setup-python@v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       
       - name: Setup dependencies
-      - run: pip install meson ninja
-      - run: make rebuild
+        run: | 
+          pip install meson ninja
+          make rebuild
 
       - name: Execute tests
         run: make test-pipeline
