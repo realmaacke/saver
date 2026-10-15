@@ -27,7 +27,12 @@ jobs:
             ninja-build,
             pkg-config,
             g++
-          cmake_command: meson setup build
+
+          cmake_command: >-
+            meson setup build &&
+            sed -i 's|"file": "\.\./|"file": "/github/workspace/|' build/compile_commands.json
+
+          # cmake_command: meson setup build
           exclude: "external/*,subprojects/*,.old/*"
 
       - if: steps.review.outputs.total_comments > 0
