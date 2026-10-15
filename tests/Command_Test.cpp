@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
+static inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
     std::vector<char*> argv;
     for (const char* arg : args) {
         argv.push_back(const_cast<char*>(arg));
