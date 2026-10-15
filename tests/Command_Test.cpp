@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <initializer_list>
+#include <string>
 #include <vector>
 
 #include "Commands.hpp"
@@ -12,11 +13,15 @@
 namespace fs = std::filesystem;
 
 inline int run_command(const cmd& c, std::initializer_list<const char*> args) {
+    std::vector<std::string> arg_buffers(args.begin(), args.end());
     std::vector<char*> argv;
-    for (const char* arg : args) {
-        argv.push_back(const_cast<char*>(arg));
+    argv.reserve(arg_buffers.size() + 1);
+
+    for (std::basic_string<char>& arg : arg_buffers) {
+        argv.push_back(arg.data());
     }
-    return c(static_cast<int>(argv.size()), argv.data());
+    argv.push_back(nullptr);
+    return c(static_cast<int>(arg_buffers.size()), argv.data());
 }
 
 namespace commands_help {
