@@ -4,6 +4,7 @@
 #include "Commands.hpp"
 #include "Output/Codes/InformationCodes.hpp"
 #include "Output/Output.hpp"
+#include "Service.hpp"
 
 std::unordered_map<std::string, std::function<int(int, char**)> (*)()>
 commands = {
@@ -40,6 +41,8 @@ int main(int argc, char** argv) {
         Output::info(InfoCode::UNKNOWN_COMMAND);
         return 1;
     }
+
+    Service::instance().usr().setConnected(Service::instance().usr().isConnected());
 
     return execute(argv[1], argc - 1, argv + 1);
 }

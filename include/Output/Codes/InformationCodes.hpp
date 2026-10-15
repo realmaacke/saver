@@ -21,6 +21,7 @@ enum class InfoCode {
     ALREADY_LOGGED_IN,
     COULD_NOT_LOG_IN,
     SUCCESSFULY_LOGGED_IN,
+    SUCCESFULY_LOGGED_OUT,
 
 };
 
@@ -80,6 +81,9 @@ constexpr InfoEntry info_codes[] = {
     {
         .type = InfoCode::SUCCESSFULY_LOGGED_IN,
         .message = "Succesfully connected to the remote"
+    }, {
+        .type = InfoCode::SUCCESFULY_LOGGED_OUT,
+        .message = "Successfully dissconnected from the remote"
     }
 };
 

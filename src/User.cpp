@@ -30,19 +30,11 @@ bool User::isConnected() {
         "auth/renew",
         true
     );
-
-    Output::print(res.message);
-    Output::print(res.success ? "true" : "false");
-    Output::print(res.token);
-
     return true;
-    // querry for token
-
-    // use stored token
 }
 
 int User::connectUser() {
-    if(this->isConnected()) {
+    if(this->is_connected) {
         Output::info(InfoCode::ALREADY_LOGGED_IN);
         return 0;
     }
@@ -50,43 +42,66 @@ int User::connectUser() {
     std::string username = prompt("Username");
     std::string password = hidden_prompt("Password");
 
-    ConnectUserDTO::Request body{username, password};
-    ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
-    (
-        "auth/connect",
-        body,
-        false
-    );
+    // ConnectUserDTO::Request body{username, password};
+    // ConnectUserDTO::Response res = Service::instance().send().post<ConnectUserDTO::Response>
+    // (
+    //     "auth/connect",
+    //     body,
+    //     false
+    // );
 
-    if (!res.success) {
-        Output::info(InfoCode::COULD_NOT_LOG_IN);
-        return 0;
-    }
+    // if (!res.success) {
+    //     Output::info(InfoCode::COULD_NOT_LOG_IN);
+    //     return 0;
+    // }
 
-    if (!res.token.is_string()) {
-        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
-        return 1;
-    }
+    // if (!res.token.is_string()) {
+    //     Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+    //     return 1;
+    // }
 
-    INIStorage storage(LocalConfigFile());
-    storage.loadStorage();
-    storage.updateStorage("API_TOKEN", res.token.get<std::string>());
-    storage.saveStorage();
+    // INIStorage storage(LocalConfigFile());
+    // storage.loadStorage();
+    // storage.updateStorage("API_TOKEN", res.token.get<std::string>());
+    // storage.saveStorage();
 
-    Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
+    // Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
     return 0;
 }
 
 int User::disconnectUser() {
+    INIStorage storage(LocalConfigFile());
+    storage.loadStorage();
+    storage.updateStorage("API_TOKEN", "undefined");
+    storage.saveStorage();
 
+    Output::info(InfoCode::SUCCESFULY_LOGGED_OUT);
+    return 0;
 }
 
 UserInfo User::getUser() {
     // querry for user here.
+    UserInfo user;
 
-    return UserInfo{
-        "test",
-        "token-here",
-        1
-    };
+    RetriveUser::Response res = Service::instance().send().get<RetriveUser::Response>
+    (
+        "auth/getUserInfo",
+        true
+    );
+
+    if (!res.success) {
+        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+        return user;
+    }
+    
+    try {
+        user.user_id = res.data.at("user_id").get<int>();
+        user.username = res.data.at("username").get<std::string>();
+        user.token = res.data.at("token").get<std::string>();
+    } catch (const nlohmann::json::exception&) {
+        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+        return UserInfo{};
+    }
+
+    return user;
 }

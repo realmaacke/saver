@@ -30,6 +30,9 @@ struct RetriveUser {
 
     };
 	struct Response {
-
+        nlohmann::json data;
+        bool success;
+        std::string message;
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, data, success, message)
 	};
 };

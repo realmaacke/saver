@@ -7,7 +7,9 @@
 #include "Project/ProjectImpl.hpp"
 #include "Project/ProjectSettings.hpp"
 #include "Prompt.hpp"
+#include "Sender/DTO/ProjectDTO.hpp"
 #include "Service.hpp"
+#include "User.hpp"
 #include <cstddef>
 #include <filesystem>
 #include <optional>
@@ -99,11 +101,39 @@ int Project::project_start() {
         Output::info(InfoCode::NOT_LOGGED_IN);
         return 0;
     }
+    UserInfo user = Service::instance().usr().getUser();
+    
+    
+    
+    std::string name = prompt("Project name");
+    
+    ProjectCreation::Response res = Service::instance().send().get<ProjectCreation::Response>
+    (
+        "proj/init/" +  user.username + "/" + name,
+        true
+    );
+    // (const std::string &path, bool useAuth)
+
+    bool uniqueName = res.success;
+
+    while(!uniqueName) {
+        name = prompt("\nYou already have a project with that name \n try again");
+        
+        ProjectCreation::Response res = Service::instance().send().get<ProjectCreation::Response>
+        (
+            "proj/init/" +  user.username + "/" + name,
+            true
+        );
+
+        if (res.success) {
+            uniqueName = true;
+            break;
+        }
+    }
     
     
     ProjectSettings settings;
-    
-    settings.project_name = prompt("Project name");
+    settings.project_name = name;
 
 
     // if name == taken, redo
