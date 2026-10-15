@@ -22,12 +22,19 @@ jobs:
         id: review
         with:
           build_dir: build
+          base_dir: build
           apt_packages: >-
             meson,
             ninja-build,
             pkg-config,
             g++
-          cmake_command: meson setup build
+          cmake_command: >-
+            meson setup build &&
+            python3 -c "import json;
+            p = 'build/compile_commands.json';
+            data = json.load(open(p));
+            [e.update({'file': e['file'].replace('../', '')}) for e in data];
+            json.dump(data, open(p, 'w'))"
           exclude: "external/*,subprojects/*,.old/*"
 
       - if: steps.review.outputs.total_comments > 0
