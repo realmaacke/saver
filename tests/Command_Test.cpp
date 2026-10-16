@@ -62,8 +62,9 @@ namespace commands_help {
 
 namespace commands_add {
     TEST(AddTest, ReturnsZeroWithLessArgs) {
-        std::string actual = std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
-        StdoutCapture out;
+        const std::string actual = 
+            std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
+        const StdoutCapture out;
         EXPECT_EQ(run_command(Commands::add(), {"saver"}), 0);
         EXPECT_EQ(actual, out.str());
     }
@@ -75,8 +76,9 @@ namespace commands_add {
         EXPECT_CALL(mock_impl, find_project_root())
             .WillOnce(testing::Return(std::nullopt));
 
-        StdoutCapture out;
-        std::string actual = std::string(code_to_message(InfoCode::PROJECT_NOT_FOUND)) + "\n";
+        const StdoutCapture out;
+        const std::string actual = 
+            std::string(code_to_message(InfoCode::PROJECT_NOT_FOUND)) + "\n";
         EXPECT_EQ(run_command(Commands::add(), {"saver", "add", "."}), 0);
         EXPECT_EQ(actual, out.str());
     }
@@ -84,8 +86,9 @@ namespace commands_add {
 
 namespace commands_remove {
     TEST(RemoveTest, ReturnsZeroWithLessArgs) {
-        std::string actual = std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
-        StdoutCapture out;
+        const std::string actual = 
+            std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
+        const StdoutCapture out;
         EXPECT_EQ(run_command(Commands::remove(), {"saver",}), 0);
         EXPECT_EQ(actual, out.str());
     }
