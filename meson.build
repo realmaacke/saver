@@ -66,6 +66,7 @@ test_exe = executable('tests',
   tests,
   include_directories : [mock_inc, inc],
   link_with : saver_lib_test,
+  link_args : ['-Wl,--allow-multiple-definition'],
   dependencies : [gtest_dep, gmock_dep] + app_deps
 )
 test('app_unit_tests', test_exe)
