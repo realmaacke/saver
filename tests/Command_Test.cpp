@@ -1,13 +1,21 @@
+#include "gmock/gmock.h"
+#include <cstdio>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <initializer_list>
+#include <optional>
 #include <string>
 #include <vector>
 #include <unistd.h>
 
+#include "Output/Codes.hpp"
 #include "Commands.hpp"
 #include "Environment.hpp"
+#include "Output/Codes/InformationCodes.hpp"
+
+#include "ProjectImplMock.hpp"
+#include "stdout.hpp"
 #include "tests/mocks/Environment.hpp"
 
 
@@ -54,6 +62,31 @@ namespace commands_help {
 
 namespace commands_add {
     TEST(AddTest, ReturnsZeroWithLessArgs) {
-        EXPECT_EQ(run_command(Commands::add(), {"saver", "add"}), 0);
+        std::string actual = std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
+        StdoutCapture out;
+        EXPECT_EQ(run_command(Commands::add(), {"saver"}), 0);
+        EXPECT_EQ(actual, out.str());
+    }
+
+    TEST(AddTest, ReturnsZeroNotInProject) {
+        ProjectImplMockController mock_impl;
+        g_project_impl_mock = &mock_impl;
+
+        EXPECT_CALL(mock_impl, find_project_root())
+            .WillOnce(testing::Return(std::nullopt));
+
+        StdoutCapture out;
+        std::string actual = std::string(code_to_message(InfoCode::PROJECT_NOT_FOUND)) + "\n";
+        EXPECT_EQ(run_command(Commands::add(), {"saver", "add", "."}), 0);
+        EXPECT_EQ(actual, out.str());
+    }
+}
+
+namespace commands_remove {
+    TEST(RemoveTest, ReturnsZeroWithLessArgs) {
+        std::string actual = std::string(code_to_message(InfoCode::NO_PATH_SPECIFIED)) + "\n";
+        StdoutCapture out;
+        EXPECT_EQ(run_command(Commands::remove(), {"saver",}), 0);
+        EXPECT_EQ(actual, out.str());
     }
 }
