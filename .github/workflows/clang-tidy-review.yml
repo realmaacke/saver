@@ -24,6 +24,16 @@ jobs:
         with:
           build_dir: build
           base_dir: build
+          clang_tidy_checks: >-
+            -*,
+            performance-*,
+            readability-*,
+            bugprone-*,
+            clang-analyzer-*,
+            cppcoreguidelines-*,
+            mpi-*,
+            misc-*,
+            -readability-convert-member-functions-to-static
           apt_packages: >-
             meson,
             ninja-build,
