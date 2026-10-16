@@ -5,6 +5,7 @@
 #include <streambuf>
 #include <string>
 
+//NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 class StdoutCapture {
 public:
     StdoutCapture() : old_buf_(std::cout.rdbuf(buffer_.rdbuf())) {}

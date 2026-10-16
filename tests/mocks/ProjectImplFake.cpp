@@ -4,7 +4,7 @@
 #include <optional>
 
 std::optional<fs::path> ProjectImpl::find_project_root() {
-    if (g_project_impl_mock) {
+    if (g_project_impl_mock != nullptr) {
         return g_project_impl_mock->find_project_root();
     }
     return std::nullopt;

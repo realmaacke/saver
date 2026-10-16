@@ -1,5 +1,4 @@
 #include "gmock/gmock.h"
-#include <cstdio>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <filesystem>
@@ -93,3 +92,5 @@ namespace commands_remove {
         EXPECT_EQ(actual, out.str());
     }
 }
+
+// NOLINTNEXTLINE
