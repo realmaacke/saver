@@ -1,0 +1,47 @@
+name: G-Tests
+
+on:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - name: Setup dependencies
+        run: | 
+          pip install meson ninja gcovr
+          meson setup build -Db_coverage=true
+          ninja -C build
+
+      - name: Execute tests
+        run: make test-pipeline
+
+      - name: Generate coverage
+        run: |
+          ninja -C build coverage-text
+          ninja -C build coverage-xml
+          ninja -C build coverage-html
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            build/meson-logs/coverage.xml
+            build/meson-logs/coveragereport/
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: build/meson-logs/coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
