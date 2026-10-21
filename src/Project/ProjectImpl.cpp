@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -31,7 +30,9 @@
 
 ProjectImpl::ProjectImpl() {
     std::optional<fs::path> root = this->find_project_root();
-    if (!root) return;
+    if (!root) {
+        return;
+    }
 
     this->obj = std::make_unique<Object>(
         root.value() / ".saver" / "objects"
@@ -72,7 +73,7 @@ std::optional<fs::path> ProjectImpl::find_project_root() {
 }
 
 int ProjectImpl::impl_help() {
-    fs::path help_file = ResourceDir("help_instructions.txt");
+    const fs::path help_file = ResourceDir("help_instructions.txt");
 
     if (!fs::exists(help_file)) {
         Output::error(ErrorCode::INTERNAL_FILE_ERROR);
@@ -88,10 +89,11 @@ int ProjectImpl::impl_help() {
     }
 
     while(std::getline(file, line)) {
-        if (line.empty()) continue;
-        if(line.rfind("#") == 0) continue;
+        if (line.empty() || (line.rfind('#') == 0)) {
+            continue;
+        }
 
-        size_t line_end = line.rfind("<NL>");
+        const size_t line_end = line.rfind("<NL>");
 
         if (line_end != std::string::npos) {
             Output::print(line.substr(0, line_end) + "\n");
@@ -110,14 +112,14 @@ int ProjectImpl::impl_start(const ProjectSettings& user_input) {
     settings.last_sync = settings.start_date;
 
     // creates root dir
-    fs::path root = fs::current_path() / ".saver";
+    const fs::path root = fs::current_path() / ".saver";
     fs::create_directories(root);
 
     // creates objects & refs dir.
     fs::create_directories(root / "objects");
 
-    fs::path refs = root / "refs";
-    fs::path refs_heads = refs / "heads";
+    const fs::path refs = root / "refs";
+    const fs::path refs_heads = refs / "heads";
     fs::create_directories(refs_heads);
     fs::create_directories(refs / "tags");
 
@@ -153,8 +155,10 @@ int ProjectImpl::impl_start(const ProjectSettings& user_input) {
 }
 
 int ProjectImpl::impl_add(const fs::path& path) {
-    if (!fs::exists(path)) return 0;
-
+    if (!fs::exists(path)){ 
+        return 0;
+    }
+    
     if (!fs::is_directory(path)) {
         this->obj_store->add_to_store(path);
     }
@@ -172,18 +176,17 @@ int ProjectImpl::impl_add(const fs::path& path) {
 }
 
 int ProjectImpl::impl_remove(const std::string& path) {
-    int del_res = this->obj_store->del_from_store(path);
-    
-    if (!del_res) Output::info(InfoCode::INDEX_NO_DEL);
-    
-    // reverse it, true == 1
-    return !del_res;
+    const int del_res = this->obj_store->del_from_store(path);
+    if (!del_res) {
+        Output::info(InfoCode::INDEX_NO_DEL);
+    }
+    return del_res ? 0 : 1;
 }
 
 int ProjectImpl::impl_describe(const std::string& message) {
-    std::string tree_hash = this->tree->describe_tree();
-    std::string parent_hash = this->refs->get_current_describe();
-    std::string describe_hash = this->describe->create_describe_object(
+    const std::string tree_hash = this->tree->describe_tree();
+    const std::string parent_hash = this->refs->get_current_describe();
+    const std::string describe_hash = this->describe->create_describe_object(
         tree_hash,
         parent_hash,
         message,
@@ -194,10 +197,17 @@ int ProjectImpl::impl_describe(const std::string& message) {
     return 0;
 }
 
+/*
+*   Upload implementation method.
+*   This method gets the relevant describes and traverses them, adding uploads till remote == cureent.
+*   Upload::Start|Chunk|Done are structs that Upload:Lines uses (std::variant).
+*/
 int ProjectImpl::impl_upload() {
+    // NOLINTNEXTLINE(misc-const-correctness)
+    // TODO: remote_hash should not be null, fetch remote hash from remote.
     std::optional<std::string> remote_hash = std::nullopt;
-    std::string latest_describe = this->refs->get_current_describe();
-    std::string current_chapter = this->refs->get_current_chapter();
+    const std::string latest_describe = this->refs->get_current_describe();
+    const std::string current_chapter = this->refs->get_current_chapter();
 
     if (latest_describe.empty()) { Output::info(InfoCode::NO_DESCRIBE_FOUND); return 0; }
     if (current_chapter.empty()) { Output::info(InfoCode::NO_CHAPTER_FOUND); return 0; }
@@ -226,12 +236,14 @@ int ProjectImpl::impl_upload() {
         DescribeWithHash desc_obj{this->describe->decode_describe_object(cursor), cursor};
         describes.push_back(desc_obj);
 
-        if (!desc_obj.desc.parent.has_value()) break;
+        if (!desc_obj.desc.parent.has_value()) {
+            break;
+        }
         cursor = desc_obj.desc.parent.value();
     }
 
     for (const DescribeWithHash& obj : describes) {
-        TreeStructure tree = this->tree->demolish_tree(obj.desc.tree);
+        const TreeStructure tree = this->tree->demolish_tree(obj.desc.tree);
 
         lines.emplace_back(Upload::Chunk{
             "chunk",
