@@ -8,7 +8,8 @@ LINT_CHECKS := -*, \
 	cppcoreguidelines-*, \
 	misc-*, \
 	-readability-convert-member-functions-to-static, \
-	-misc-no-recursion
+	-misc-no-recursion, \
+	-readability-identifier-length
 
 LINT_COMPILER_ARGS := -Wno-predefined-identifier-outside-function
 
