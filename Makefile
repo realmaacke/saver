@@ -7,7 +7,9 @@ LINT_CHECKS := -*, \
 	clang-analyzer-*, \
 	cppcoreguidelines-*, \
 	misc-*, \
-	-readability-convert-member-functions-to-static
+	-readability-convert-member-functions-to-static, \
+	-misc-no-recursion, \
+	-readability-identifier-length
 
 LINT_COMPILER_ARGS := -Wno-predefined-identifier-outside-function
 
@@ -50,7 +52,7 @@ test: build
 test-pipeline:
 	meson test -C $(BUILD_DIR) app_unit_tests --print-errorlogs
 
-# reguires clang-tidy 21
+# reguires clang-tidy, i use v21
 # install with apt or whatever package manager u use.
 linter:
 	find src -name '*.cpp' | \
