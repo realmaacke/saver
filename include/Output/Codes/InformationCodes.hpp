@@ -15,6 +15,7 @@ enum class InfoCode {
     // Upload
     NO_DESCRIBE_FOUND,
     NO_CHAPTER_FOUND,
+    ALREADY_UPLOADED,
 
     // Auth
     NOT_LOGGED_IN,
@@ -22,6 +23,7 @@ enum class InfoCode {
     COULD_NOT_LOG_IN,
     SUCCESSFULY_LOGGED_IN,
     SUCCESFULY_LOGGED_OUT,
+    COULD_NOT_AUTHENTICATE,
 
 };
 
@@ -84,6 +86,14 @@ constexpr InfoEntry info_codes[] = {
     }, {
         .type = InfoCode::SUCCESFULY_LOGGED_OUT,
         .message = "Successfully dissconnected from the remote"
+    },
+    {
+        .type = InfoCode::COULD_NOT_AUTHENTICATE,
+        .message = "Could not authenticate with remote"
+    },
+    {
+        .type = InfoCode::ALREADY_UPLOADED,
+        .message = "Describe is already uploaded"
     }
 };
 

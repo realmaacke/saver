@@ -48,7 +48,6 @@ inline fs::path LocalConfigFile() {
     fs::path file = LocalConfigDir() / "global_saver.ini";
 
     if (!fs::exists(file)) {
-        Output::print(file);
         Output::error(ErrorCode::INVALID_PATH, __FUNCTION__);
         return {};
     }

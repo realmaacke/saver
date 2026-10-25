@@ -9,19 +9,19 @@ struct ConnectUserDTO {
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(Request, username, password)
     };
     struct Response {
-        nlohmann::json token;
+        nlohmann::json data;
         bool success;
         std::string message;
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, token, success, message)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, data, success, message)
     };
 };
 
 struct UserVerify {
     struct Response {
-        nlohmann::json token;
+        nlohmann::json data;
         bool success;
         std::string message;
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, token, success, message)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, data, success, message)
     };
 };
 

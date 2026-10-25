@@ -27,6 +27,10 @@
 #include "INIStorage.hpp"
 
 #include "Sender/DTO/NDJSON.hpp"
+#include "Sender/DTO/ProjectDTO.hpp"
+#include "Service.hpp"
+#include "User.hpp"
+#include "nlohmann/json.hpp"
 
 ProjectImpl::ProjectImpl() {
     std::optional<fs::path> root = this->find_project_root();
@@ -202,35 +206,51 @@ int ProjectImpl::impl_describe(const std::string& message) {
 *   This method gets the relevant describes and traverses them, adding uploads till remote == cureent.
 *   Upload::Start|Chunk|Done are structs that Upload:Lines uses (std::variant).
 */
-int ProjectImpl::impl_upload() {
-    // NOLINTNEXTLINE(misc-const-correctness)
-    // TODO: remote_hash should not be null, fetch remote hash from remote.
+int ProjectImpl::impl_upload() {    
+    const fs::path root = fs::current_path() / ".saver";
+
+    UserInfo user = Service::instance().usr().getUser();
+    
+    INIStorage storage(root / "project.ini");
+    storage.loadStorage();
+
+    std::string projectName = storage.getValue("project_name").value_or("undefined");
+
+
+    if (projectName == "undefined") {
+        Output::print("Error msg here impl_upload");
+        return 1;
+    }
+
+    ProjectGetLatestHead::Response latestRes = Service::instance().send().get<ProjectGetLatestHead::Response>
+    (
+        "proj/" + user.username + "/" + projectName + "/latest-head",
+        true
+    );
+
     std::optional<std::string> remote_hash = std::nullopt;
+
+    if (latestRes.data.is_string()) {
+        remote_hash = latestRes.data.get<std::string>();
+    }
+
     const std::string latest_describe = this->refs->get_current_describe();
     const std::string current_chapter = this->refs->get_current_chapter();
 
     if (latest_describe.empty()) { Output::info(InfoCode::NO_DESCRIBE_FOUND); return 0; }
     if (current_chapter.empty()) { Output::info(InfoCode::NO_CHAPTER_FOUND); return 0; }
 
+    if (latest_describe == remote_hash) {
+        Output::info(InfoCode::ALREADY_UPLOADED);
+        return 0;
+    }
+
     struct DescribeWithHash { DescribeObject desc; std::string hash;};
     std::vector<DescribeWithHash> describes;
     std::string cursor = latest_describe;
 
     // this vector will be sent with NDJOSN
-    std::vector<Upload::Line> lines;
-
-    // add start
-    lines.emplace_back(Upload::Start{"start", latest_describe, current_chapter});
-
-    // add describe
-    lines.emplace_back(Upload::Chunk{
-        "chunk",
-        latest_describe,
-        std::nullopt,
-        base_64_encode(
-            this->obj->retrive_stored_blob(latest_describe)
-        ),
-    });
+    std::vector<Upload::Line> lines = {Upload::Start{"start", latest_describe, current_chapter}};
 
     while(!cursor.empty() && cursor != remote_hash) {
         DescribeWithHash desc_obj{this->describe->decode_describe_object(cursor), cursor};
@@ -254,6 +274,15 @@ int ProjectImpl::impl_upload() {
             )
         });
 
+        lines.emplace_back(Upload::Chunk{
+            "chunk",
+            obj.desc.tree,
+            std::nullopt,
+            base_64_encode(
+                this->obj->retrive_stored_blob(obj.desc.tree)
+            ) 
+        });
+
         for (const TreeNode& node : tree.entries) {
             lines.emplace_back(Upload::Chunk{
                 "chunk",
@@ -263,9 +292,21 @@ int ProjectImpl::impl_upload() {
             });
         }
 
-        lines.emplace_back(Upload::Done{"done"});
-
-        // Send lines here:
     }
+
+    lines.emplace_back(Upload::Done{"done"});
+
+    Upload::Response res = Service::instance().send().postNDJSON<Upload::Response>
+    (
+        "proj/upload/" + user.username + "/" + projectName,
+        lines,
+        true
+    );
+
+    if (!res.success) {
+        Output::print("Bad upload info add");
+        return 1;
+    }
+
     return 0;
 }

@@ -97,6 +97,7 @@ int Project::project_start() {
         Output::info(InfoCode::NOT_LOGGED_IN);
         return 0;
     }
+
     const UserInfo user = Service::instance().usr().getUser();
     
     std::string name = prompt("Project name");
@@ -107,21 +108,24 @@ int Project::project_start() {
         true
     );
 
-    while(true) {
-        // TODO: add counter, after 10 failed attemps, just quit it.
-        name = prompt("\nYou already have a project with that name \n try again");
-        
-        ProjectCreation::Response res = Service::instance().send().get<ProjectCreation::Response>
-        (
-            "proj/init/" +  user.username + "/" + name,
-            true
-        );
-
-        if (res.success) {
-            break;
+    if (!res.success) {
+        while(true) {
+            // TODO: add counter, after 10 failed attemps, just quit it.
+            name = prompt("\nYou already have a project with that name \n try again");
+            
+            ProjectCreation::Response res = Service::instance().send().get<ProjectCreation::Response>
+            (
+                "proj/init/" +  user.username + "/" + name,
+                true
+            );
+    
+            if (res.success) {
+                break;
+            }
+    
         }
-
     }
+
     
     
     ProjectSettings settings;
@@ -192,7 +196,11 @@ int Project::project_upload() {
 
     // check if user signed in
     // check that user owns repo.
-    
+
+    if (!Service::instance().usr().isConnected()) {
+        Output::info(InfoCode::NOT_LOGGED_IN);
+        return 0;
+    }
 
     // pass user struct to upload?
     return this->p_impl.impl_upload();
