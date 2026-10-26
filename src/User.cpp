@@ -28,7 +28,7 @@ bool User::isConnected() {
     Service::instance().send().setToken(token.value());
     
     UserVerify::Response res = Service::instance().send().get<UserVerify::Response>(
-        "auth/renew",
+        "auth/token/renew",
         true
     );
 
@@ -45,6 +45,7 @@ int User::connectUser() {
     std::string password = hidden_prompt("Password");
 
     ConnectUserDTO::Request const body{username, password};
+    
     ConnectUserDTO::Response const res = Service::instance().send().post<ConnectUserDTO::Response>
     (
         "auth/connect",
@@ -57,14 +58,14 @@ int User::connectUser() {
         return 0;
     }
 
-    if (!res.token.is_string()) {
+    if (!res.data.is_string()) {
         Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
         return 1;
     }
 
     INIStorage storage(LocalConfigFile());
     storage.loadStorage();
-    storage.updateStorage("API_TOKEN", res.token.get<std::string>());
+    storage.updateStorage("API_TOKEN", res.data.get<std::string>());
     storage.saveStorage();
 
     Output::info(InfoCode::SUCCESSFULY_LOGGED_IN);
@@ -87,17 +88,17 @@ UserInfo User::getUser() {
 
     RetriveUser::Response res = Service::instance().send().get<RetriveUser::Response>
     (
-        "auth/getUserInfo",
+        "user/get-with-token",
         true
     );
 
     if (!res.success) {
-        Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);
+        Output::info(InfoCode::COULD_NOT_AUTHENTICATE);
         return user;
     }
     
     try {
-        user.user_id = res.data.at("user_id").get<int>();
+        user.user_id = res.data.at("id").get<int>();
         user.username = res.data.at("username").get<std::string>();
     } catch (const nlohmann::json::exception&) {
         Output::error(ErrorCode::AUTH_FAILED_INTERNAL, __FUNCTION__);

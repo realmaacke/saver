@@ -81,7 +81,7 @@ std::string Sender::request(
             std::string authHeader = "Authorization: Bearer " + token;
             headers = curl_slist_append(headers, authHeader.c_str());
         }
-
+        
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);

@@ -8,10 +8,23 @@ struct ProjectCreation {
     };
 
     struct Response {
-        bool success;
         nlohmann::json data;
+        bool success;
         std::string message;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, success, data, message)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Response, data, success, message)
+    };
+};
+
+struct ProjectGetLatestHead {
+    struct Request {
+
+    };
+    struct Response {
+        nlohmann::json data;
+        bool success;
+        std::string message;
+
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Response, data, success, message)
     };
 };
