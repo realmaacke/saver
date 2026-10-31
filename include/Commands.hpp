@@ -11,6 +11,7 @@ public:
     static cmd start();
     static cmd add();
     static cmd remove();
+    static cmd diff();
 
     static cmd describe();
     static cmd upload();

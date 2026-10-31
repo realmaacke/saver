@@ -14,6 +14,7 @@ public:
     int project_help();
     int project_status();
     int project_start();
+    int project_diff();
     
     int project_add(const std::string& path);
     int project_removal(const std::string& path);

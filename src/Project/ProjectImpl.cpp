@@ -60,6 +60,13 @@ ProjectImpl::ProjectImpl() {
     this->refs = std::make_unique<Refs>(
         root.value()
     );
+
+    this->diffs = std::make_unique<Diff>(
+        this->describe.get(),
+        this->tree.get(),
+        root.value(),
+        root.value() / ".saver"
+    );
 }
 
 std::optional<fs::path> ProjectImpl::find_project_root() {
@@ -158,21 +165,37 @@ int ProjectImpl::impl_start(const ProjectSettings& user_input) {
     return 0;
 }
 
-int ProjectImpl::impl_add(const fs::path& path) {
+static bool is_ignored(const fs::path& path, fs::path dir) {
+    fs::path pn = path.lexically_normal();
+    dir = dir.lexically_normal();
+    
+    if (dir.filename().empty()) dir = dir.parent_path();
+    auto [it, _] = 
+        std::mismatch(dir.begin(), dir.end(), pn.begin(), pn.end());
+
+    return it == dir.end();
+}
+
+int ProjectImpl::impl_add(const fs::path& path, const std::vector<fs::path>& ignored) {
     if (!fs::exists(path)){ 
         return 0;
     }
+
+    for (const fs::path& dir : ignored) {
+        if (is_ignored(path, dir)) return 0;
+    }
     
     if (!fs::is_directory(path)) {
-        this->obj_store->add_to_store(path);
+        // this->obj_store->add_to_store(path);
+        this->obj_store->add_to_store(fs::relative(path, this->find_project_root().value()));
     }
 
     if (fs::is_directory(path)) {
         for (const fs::directory_entry& entry : fs::directory_iterator(path)) {
             if (fs::is_directory(entry)) {
-                this->impl_add(entry.path());
+                this->impl_add(entry.path(), ignored);
             } else {
-                this->obj_store->add_to_store(entry.path());
+                this->obj_store->add_to_store(fs::relative(entry.path(), this->find_project_root().value()));
             }
         }
     }
@@ -185,6 +208,16 @@ int ProjectImpl::impl_remove(const std::string& path) {
         Output::info(InfoCode::INDEX_NO_DEL);
     }
     return del_res ? 0 : 1;
+}
+
+int ProjectImpl::impl_diff() {
+    std::string chapter = this->refs->get_current_describe();
+    std::map<std::string, TreeNode> snapshot = this->diffs->resolve_snapshot(chapter);
+    
+    for (std::pair<const std::basic_string<char>, TreeNode> & entry : snapshot) {
+        Output::print(entry.first);
+    }
+    return 0;
 }
 
 int ProjectImpl::impl_describe(const std::string& message) {

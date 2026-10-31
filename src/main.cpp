@@ -14,6 +14,7 @@ commands = {
     {"start",       Commands::start},
     {"add",         Commands::add},
     {"remove",      Commands::remove},
+    {"diff",        Commands::diff},
 
     {"describe",    Commands::describe},
     {"upload",      Commands::upload},
