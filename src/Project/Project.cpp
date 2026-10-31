@@ -10,9 +10,13 @@
 #include "Sender/DTO/ProjectDTO.hpp"
 #include "Service.hpp"
 #include "User.hpp"
+#include <algorithm>
 #include <filesystem>
+#include <fstream>
+#include <istream>
 #include <optional>
 #include <string>
+#include <utility>
 
 Project::Project() {
     this->p_impl = ProjectImpl();
@@ -170,9 +174,20 @@ int Project::project_start() {
     return this->p_impl.impl_start(settings);
 }
 
+
 int Project::project_add(const std::string& path) {
     this->project_environment();
-    return this->p_impl.impl_add(path);
+
+    fs::path root = fs::path(this->project_directory);
+    fs::path target = (root / path).lexically_normal();
+
+    std::vector<fs::path> ignored;
+    std::ifstream infile(root / ".saverignore");
+    std::string line;
+    while (std::getline(infile, line))
+        if (!line.empty()) ignored.push_back((root / line).lexically_normal());
+
+    return this->p_impl.impl_add(target, ignored);
 }
 
 int Project::project_removal(const std::string& path) {
@@ -189,6 +204,11 @@ int Project::project_describe(const std::string& message) {
     }
 
     return this->p_impl.impl_describe(message);
+}
+
+int Project::project_diff() {
+    this->project_environment();
+    return this->p_impl.impl_diff();
 }
 
 int Project::project_upload() {

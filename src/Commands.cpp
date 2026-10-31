@@ -50,6 +50,12 @@ cmd Commands::remove() {
     };
 };
 
+cmd Commands::diff() {
+    return [](int, char**) {
+        return Service::instance().proj().project_diff();
+    };
+};
+
 cmd Commands::describe() {
     return [](int argc, char** argv) {
         if (argc < 2) {

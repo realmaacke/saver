@@ -1,0 +1,9 @@
+.cache
+.github
+.vscode
+.git
+.saver
+build
+subprojects
+subprojects
+.gitignore
